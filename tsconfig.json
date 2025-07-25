@@ -1,0 +1,8 @@
+// Bakee/tsconfig.json
+{
+  "files": [],
+  "references": [
+    { "path": "./client" },
+    { "path": "./server" }
+  ]
+}

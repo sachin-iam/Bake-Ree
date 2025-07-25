@@ -1,0 +1,15 @@
+# Ignore dependencies
+node_modules/
+
+# Ignore build output
+.next/
+dist/
+out/
+
+# Ignore environment variables
+.env
+.env.local
+
+# Misc
+.DS_Store
+.vscode/

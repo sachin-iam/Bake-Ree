@@ -1,0 +1,11 @@
+{
+  "dependencies": {
+    "dotenv": "^17.2.1",
+    "mongoose": "^8.16.5",
+    "next": "^15.4.4"
+  },
+  "devDependencies": {
+    "@types/mongoose": "^5.11.96",
+    "@types/node": "^24.1.0"
+  }
+}
