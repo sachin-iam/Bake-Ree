@@ -1,13 +1,17 @@
 'use client';
 
 import Link from 'next/link';
+import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { useEffect, useState } from 'react';
+import { HiOutlineShoppingCart } from 'react-icons/hi';
+import { useCartStore } from '../../store/cartStore'; 
 
 const navLinks = [
-  { name: 'Services', href: '/services' },
-  { name: 'About', href: '/about' },
-  { name: 'FAQ', href: '/faq' },
+  { name: 'Home', href: '/' },
+  { name: 'Products', href: '/product' },
+  { name: 'About', href: '/#about' },
+  { name: 'Contact', href: '/#contact' },
 ];
 
 export default function Navbar() {
@@ -15,13 +19,16 @@ export default function Navbar() {
   const [show, setShow] = useState(true);
   const [lastScrollY, setLastScrollY] = useState(0);
 
+  const { cart } = useCartStore();
+  const hasItems = cart.length > 0;
+
   useEffect(() => {
     const handleScroll = () => {
       const currentY = window.scrollY;
       if (currentY > lastScrollY && currentY > 80) {
-        setShow(false); // scrolling down
+        setShow(false);
       } else {
-        setShow(true); // scrolling up
+        setShow(true);
       }
       setLastScrollY(currentY);
     };
@@ -37,31 +44,23 @@ export default function Navbar() {
       } flex justify-center bg-transparent py-1 pt-5`}
     >
       <div className="w-full max-w-7xl flex items-center justify-between bg-white rounded-full px-6 py-3 shadow-sm">
-        {/* Logo */}
-        <div className="flex items-center space-x-2">
-          <div className="bg-[#2a2927] text-white p-1 rounded-full">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              className="h-5 w-5"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              strokeWidth={2}
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M12 6v6m0 0v6m0-6h6m-6 0H6"
-              />
-            </svg>
-          </div>
-          <span className="text-lg font-semibold text-[#2a2927]">
-            Belsurance
-          </span>
+        {/* Logo + Brand Name */}
+        <div className="flex items-center space-x-3">
+          <Link href="/" className="flex-shrink-0">
+            <Image
+              src="/images/logo.png"
+              alt="Bake Ree Logo"
+              width={40}
+              height={40}
+              className="rounded-full"
+              priority
+            />
+          </Link>
+          <span className="text-lg ml-2 font-semibold text-[#2a2927]">Bake Ree</span>
         </div>
 
-        {/* Navigation Links */}
-        <div className="flex items-center space-x-8 text-sm font-medium text-[#2a2927]">
+        {/* Navigation Links + Icons */}
+        <div className="flex items-center space-x-6 text-sm font-medium text-[#2a2927]">
           {navLinks.map((link) => (
             <Link
               key={link.href}
@@ -69,20 +68,32 @@ export default function Navbar() {
               className={`transition-colors duration-200 hover:text-teal-600 ${
                 pathname === link.href ? 'text-teal-600' : ''
               }`}
+              scroll={true}
             >
               {link.name}
             </Link>
           ))}
-          {/* Contact Button */}
-          <Link href="/contact">
-            <button
-              className={`px-5 py-2 rounded-full text-white transition-all duration-200 font-medium ${
-                pathname === '/contact'
-                  ? 'bg-teal-700'
-                  : 'bg-[#2a2927] hover:bg-teal-700'
-              }`}
+
+          {/* 🛒 Cart Icon with Dot */}
+          <Link href="/cart">
+            <div
+              id="cart-icon"
+              className="relative cursor-pointer hover:text-teal-600 transition-all"
             >
-              Contact Us
+              <HiOutlineShoppingCart className="text-2xl" />
+              {hasItems && (
+                <>
+                  <span className="absolute -top-1 -right-1 h-2 w-2 bg-red-500 rounded-full animate-ping"></span>
+                  <span className="absolute -top-1 -right-1 h-2 w-2 bg-red-500 rounded-full"></span>
+                </>
+              )}
+            </div>
+          </Link>
+
+          {/* Login Button */}
+          <Link href="/login">
+            <button className="px-5 py-2 rounded-full text-white transition-all duration-200 font-medium bg-[#2a2927] hover:bg-white hover:text-black hover:border hover:border-[#2a2927]">
+              Login
             </button>
           </Link>
         </div>

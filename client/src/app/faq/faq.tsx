@@ -1,7 +1,6 @@
-'use client';
+"use client";
 
-import { useState, useRef } from 'react';
-import { motion, useScroll, useTransform } from 'framer-motion';
+import { useState, useRef, useEffect } from "react";
 import {
   FaFacebookF,
   FaXTwitter,
@@ -9,93 +8,103 @@ import {
   FaLink,
   FaPlay,
   FaPause,
-} from 'react-icons/fa6';
-import { Tooltip } from 'react-tooltip';
-import 'react-tooltip/dist/react-tooltip.css';
+} from "react-icons/fa6";
+import { Tooltip } from "react-tooltip";
+import "react-tooltip/dist/react-tooltip.css";
 
 const faqData = {
   General: [
     {
-      id: 'faq1',
-      question: 'What is an FAQ section?',
+      id: "faq1",
+      question: "Do you bake fresh every day?",
       answer:
-        'An FAQ section can be used to quickly answer common questions about your business like "Where do you ship to?", "What are your opening hours?", or "How can I book a service?"',
+        "Yes! All our breads, cakes, and pastries are freshly baked each morning to ensure quality and flavor.",
     },
     {
-      id: 'faq2',
-      question: 'Why do FAQs matter?',
+      id: "faq2",
+      question: "Do you offer custom cakes?",
       answer:
-        'FAQs help site visitors find answers and improve your site’s UX with better navigation.',
+        "Absolutely. We specialize in custom birthday, wedding, and celebration cakes. Contact us in advance!",
     },
     {
-      id: 'faq3',
-      question: 'Where can I add my FAQs?',
-      answer: 'Add them from your dashboard under content or FAQs section.',
+      id: "faq3",
+      question: "Are your products eggless or vegan?",
+      answer:
+        "We offer a selection of eggless and vegan items. Just check the labels or ask our staff.",
     },
   ],
-  'Setting up FAQs': [
+  Orders: [
     {
-      id: 'faq4',
-      question: 'How do I add a new question & answer?',
+      id: "faq4",
+      question: "How can I place an order?",
       answer:
-        'To add a new FAQ follow these steps:\n1. Go to your dashboard\n2. Add a new question & answer\n3. Assign it\n4. Save and publish.',
+        "You can place an order online via our website, or visit us in-store. For custom items, call us directly.",
     },
     {
-      id: 'faq5',
-      question: 'Can I insert an image, video, or GIF in my FAQ?',
-      answer: 'Yes, all media types can be added using the visual editor.',
+      id: "faq5",
+      question: "Do you deliver?",
+      answer:
+        "Yes, we offer local delivery within a 10 km radius for online and phone orders.",
     },
     {
-      id: 'faq6',
-      question: 'How do I edit or remove the FAQ title?',
-      answer: 'Click the heading and edit the text like any section block.',
+      id: "faq6",
+      question: "Can I schedule a pickup?",
+      answer:
+        "Absolutely. Choose your pickup date and time during checkout or give us a call.",
     },
   ],
 };
 
 export default function FAQPage() {
-  const [activeTab, setActiveTab] = useState<'General' | 'Setting up FAQs'>('General');
+  const [activeTab, setActiveTab] = useState<"General" | "Orders">("General");
   const [openId, setOpenId] = useState<string | null>(null);
-  const [playing, setPlaying] = useState(false);
-  const pinRef = useRef(null);
-
-  const { scrollYProgress } = useScroll({
-    target: pinRef,
-    offset: ['start end', 'end start'],
-  });
-
-  const translateY = useTransform(scrollYProgress, [0, 0.4], ['0%', '-20%']);
+  const [playing, setPlaying] = useState<boolean>(true);
+  const videoRef = useRef<HTMLVideoElement>(null);
 
   const handleCopy = (id: string) => {
     navigator.clipboard.writeText(`#${id}`);
   };
 
+  const togglePlayPause = () => {
+    const video = videoRef.current;
+    if (!video) return;
+
+    if (playing) {
+      video.pause();
+    } else {
+      video.play();
+    }
+
+    setPlaying(!playing);
+  };
+
   return (
-    <section className="bg-[#FDFCF7] text-black px-6 py-20">
-      <div className="max-w-7xl mx-auto grid md:grid-cols-3 gap-12">
-        {/* Left */}
-        <div className="col-span-1">
-          <span className="inline-block bg-black text-white text-xs font-bold px-3 py-1 rounded mb-4">
-            FAQ
-          </span>
-          <h2 className="text-5xl font-semibold leading-snug">
-            You’re probably<br />
-            wondering…
-          </h2>
-        </div>
+    <section className="bg-[#FDFCF7] text-black w-full flex flex-col md:flex-row relative min-h-[250vh] px-6 py-20">
+      {/* Left column - sticky heading */}
+      <div className="md:w-1/3 sticky top-0 h-fit self-start p-10 md:p-20 z-10">
+        <span className="inline-block bg-black text-white text-xs tracking-widest font-semibold px-4 py-2 rounded-br-xl mb-6">
+          FAQ
+        </span>
+        <h2 className="text-5xl font-semibold leading-tight">
+          You’re probably
+          <br />
+          wondering…
+        </h2>
+      </div>
 
-        {/* Center FAQ */}
-        <motion.div ref={pinRef} className="col-span-1 space-y-6" style={{ y: translateY }}>
-          <h3 className="text-2xl font-bold">Frequently asked questions</h3>
-
+      {/* Middle column - scrollable FAQ list */}
+      <div className="md:w-1/3 relative h-screen z-10">
+        <div className="absolute top-0 left-0 right-0 bottom-0 overflow-y-auto no-scrollbar px-6 py-20">
           {/* Tabs */}
           <div className="flex space-x-6 text-base mb-4">
-            {(['General', 'Setting up FAQs'] as const).map((tab) => (
+            {(["General", "Orders"] as const).map((tab) => (
               <button
                 key={tab}
                 onClick={() => setActiveTab(tab)}
                 className={`font-medium transition-colors ${
-                  activeTab === tab ? 'text-black underline' : 'text-gray-500 hover:text-black'
+                  activeTab === tab
+                    ? "text-black underline"
+                    : "text-gray-500 hover:text-black"
                 }`}
               >
                 {tab}
@@ -106,20 +115,22 @@ export default function FAQPage() {
           {/* FAQ List */}
           <div className="space-y-4">
             {faqData[activeTab].map((faq) => (
-              <div key={faq.id} className="border-b py-4">
+              <div key={faq.id} className="border-b pb-6">
                 <button
                   onClick={() => setOpenId(openId === faq.id ? null : faq.id)}
                   className="flex justify-between w-full text-left group"
                 >
-                  <span className="text-base font-semibold">{faq.question}</span>
-                  <span className="text-xl transform transition-transform group-hover:rotate-180">
-                    {openId === faq.id ? '−' : '+'}
+                  <span className="text-base font-semibold">
+                    {faq.question}
+                  </span>
+                  <span className="text-xl transform transition-transform group-hover:rotate-180 cursor-pointer">
+                    {openId === faq.id ? "−" : "+"}
                   </span>
                 </button>
                 {openId === faq.id && (
                   <div className="mt-2 text-sm text-gray-700 space-y-3">
                     <p>{faq.answer}</p>
-                    <div className="flex space-x-4 text-gray-700 text-xl">
+                    <div className="flex space-x-4 text-gray-700 text-xl cursor-pointer">
                       <FaFacebookF />
                       <FaXTwitter />
                       <FaLinkedinIn />
@@ -138,56 +149,54 @@ export default function FAQPage() {
               </div>
             ))}
           </div>
-        </motion.div>
+        </div>
+      </div>
 
-        {/* Right Video */}
-        <div className="col-span-1">
-          <div className="relative w-full aspect-[3/4] overflow-hidden">
-            {/* Scalloped Green Background */}
+      {/* Right Video */}
+      <div className="md:w-1/3 sticky top-0 h-fit self-start p-10 z-10 flex items-center justify-center">
+        <div className="relative w-full aspect-[3/4] overflow-hidden rounded-[40px]">
+          {/* Decorative Scalloped Sides (SVG Mask alternative) */}
+          <div className="absolute inset-0 z-0 pointer-events-none">
             <svg
-              className="absolute inset-0 w-full h-full z-0"
-              viewBox="0 0 400 500"
+              viewBox="0 0 100 100"
               preserveAspectRatio="none"
+              className="absolute left-0 top-0 h-full w-5 text-[#006633] fill-current"
             >
-              <path
-                fill="#006633"
-                d="
-                  M0,50 
-                  Q0,0 50,0 
-                  H350 
-                  Q400,0 400,50 
-                  V450 
-                  Q400,500 350,500 
-                  H50 
-                  Q0,500 0,450 
-                  Z"
-              />
+              <path d="M100,0 Q50,20 100,40 Q50,60 100,80 Q50,100 100,120" />
             </svg>
-
-            {/* Video */}
-            <video
-              className="absolute inset-0 w-full h-full object-cover z-10"
-              autoPlay={playing}
-              loop
-              muted
-              playsInline
-              poster="/faq-poster.png"
+            <svg
+              viewBox="0 0 100 100"
+              preserveAspectRatio="none"
+              className="absolute right-0 top-0 h-full w-5 text-[#006633] fill-current rotate-180"
             >
-              <source src="/faq-video.mp4" type="video/mp4" />
-            </video>
-
-            {/* Play/Pause */}
-            <button
-              onClick={() => setPlaying(!playing)}
-              className="absolute inset-0 z-20 flex items-center justify-center bg-black/20 hover:bg-black/40 transition"
-            >
-              {playing ? (
-                <FaPause className="text-white text-4xl" />
-              ) : (
-                <FaPlay className="text-white text-4xl" />
-              )}
-            </button>
+              <path d="M100,0 Q50,20 100,40 Q50,60 100,80 Q50,100 100,120" />
+            </svg>
           </div>
+
+          {/* Video Content */}
+          <video
+            ref={videoRef}
+            className="absolute inset-0 w-full h-full object-cover z-10"
+            autoPlay
+            loop
+            muted
+            playsInline
+          >
+            <source src="/videos/faq-video.mp4" type="video/mp4" />
+            Your browser does not support the video tag.
+          </video>
+
+          {/* Play/Pause Button */}
+          <button
+            onClick={togglePlayPause}
+            className="absolute inset-0 z-20 flex items-center justify-center bg-black/20 hover:bg-black/40 transition"
+          >
+            {playing ? (
+              <FaPause className="text-white text-4xl cursor-pointer" />
+            ) : (
+              <FaPlay className="text-white text-4xl cursor-pointer" />
+            )}
+          </button>
         </div>
       </div>
     </section>

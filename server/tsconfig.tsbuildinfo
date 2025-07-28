@@ -1,1 +1,0 @@
-{"root":["./app/api/auth/login/route.ts","./app/api/auth/register/route.ts","./db/connect.ts","./models/user.ts"],"errors":true,"version":"5.8.3"}

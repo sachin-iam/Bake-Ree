@@ -13,20 +13,20 @@ export default function Hero() {
         {/* Left Text */}
         <div className="flex-1 pt-4">
           <h1 className="text-7xl md:text-7xl font-light text-[#2a2927] leading-tight mb-6">
-            Insurance
+            Delicious
             <br />
-            Coverage You
+            Moments You
             <br />
             Can Count On
           </h1>
           <p className="text-xl text-[#2a2927] mb-8">
-            Wherever and whenever you need.
+            Where every slice tells a story.
             <br />
-            It’s our job to protect you and what matters to you most.
+            It’s our joy to bake smiles and share sweet moments with you.
           </p>
-          <Link href="/contact">
+          <Link href="/products">
             <button className="bg-[#005c45] text-white rounded-full px-6 py-3 hover:bg-teal-700 transition-all duration-200">
-              Contact Us
+              Order Now
             </button>
           </Link>
         </div>
@@ -58,8 +58,8 @@ export default function Hero() {
                 }`}
               >
                 <Image
-                  src="/images/baker.jpg"
-                  alt="Baker Girl"
+                  src="/images/cake-circle.jpg"
+                  alt="Cake Circle"
                   fill
                   className="object-cover"
                 />
@@ -102,8 +102,8 @@ export default function Hero() {
               }`}
             >
               <Image
-                src="/images/cake-circle.jpg"
-                alt="Cake Circle"
+                src="/images/baker.jpg"
+                alt="Baker Girl"
                 fill
                 className="object-cover"
               />
