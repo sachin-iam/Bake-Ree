@@ -4,7 +4,6 @@ import { useEffect, useState, useRef } from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import axios from "axios";
 import toast from "react-hot-toast";
-import Barcode from "react-barcode";
 import JsBarcode from "jsbarcode";
 
 const statusStyles: Record<string, string> = {
@@ -33,6 +32,7 @@ export default function OrderDetails() {
         const res = await axios.get(`http://localhost:5000/api/orders/${id}`, {
           headers: { Authorization: `Bearer ${token}` },
         });
+        console.log("Fetched Order Data:", res.data); // Debug log
         setOrder(res.data);
         setFormattedDate(new Date(res.data.createdAt).toLocaleString());
       } catch (err) {
@@ -44,48 +44,47 @@ export default function OrderDetails() {
     fetchOrder();
   }, [id]);
 
- useEffect(() => {
-  if (!order || !order._id || !barcodeRef.current) return;
+  useEffect(() => {
+    if (!order || !order._id || !barcodeRef.current) return;
 
-  const canvas = document.createElement("canvas");
-  const context = canvas.getContext("2d");
+    const canvas = document.createElement("canvas");
+    const context = canvas.getContext("2d");
 
-  const fixedCanvasWidth = 300;
-  const canvasHeight = 80;
-  const idLength = order._id.length;
+    const fixedCanvasWidth = 300;
+    const canvasHeight = 80;
+    const idLength = order._id.length;
 
-  // Calculate bar width so barcode fits nicely inside fixed canvas
-  const barWidth = fixedCanvasWidth / (idLength * 11); // tweak 11 for spacing
-  const fontSize = 16; // fixed or dynamic as needed
+    // Calculate bar width so barcode fits nicely inside fixed canvas
+    const barWidth = fixedCanvasWidth / (idLength * 11); // tweak 11 for spacing
+    const fontSize = 16; // fixed or dynamic as needed
 
-  canvas.width = fixedCanvasWidth;
-  canvas.height = canvasHeight;
+    canvas.width = fixedCanvasWidth;
+    canvas.height = canvasHeight;
 
-  JsBarcode(canvas, order._id, {
-    format: "CODE128",
-    width: barWidth,
-    height: 50,
-    displayValue: true,
-    fontSize: fontSize,
-    textAlign: "center",
-    lineColor: "#000",
-    background: "#fff",
-    textMargin: 5,
-    margin: 0,
-  });
+    JsBarcode(canvas, order._id, {
+      format: "CODE128",
+      width: barWidth,
+      height: 50,
+      displayValue: true,
+      fontSize: fontSize,
+      textAlign: "center",
+      lineColor: "#000",
+      background: "#fff",
+      textMargin: 5,
+      margin: 0,
+    });
 
-  const dataUrl = canvas.toDataURL("image/png");
+    const dataUrl = canvas.toDataURL("image/png");
 
-  const img = new Image();
-  img.src = dataUrl;
-  img.alt = `Order Barcode - ${order._id}`;
-  img.style.maxWidth = "100%";
-  img.style.height = "auto";
+    const img = new Image();
+    img.src = dataUrl;
+    img.alt = `Order Barcode - ${order._id}`;
+    img.style.maxWidth = "100%";
+    img.style.height = "auto";
 
-  barcodeRef.current.innerHTML = "";
-  barcodeRef.current.appendChild(img);
-}, [order?._id]);
-
+    barcodeRef.current.innerHTML = "";
+    barcodeRef.current.appendChild(img);
+  }, [order?._id]);
 
   return (
     <div className="min-h-screen bg-gray-100 px-4 sm:px-8 py-10">
@@ -170,63 +169,154 @@ export default function OrderDetails() {
 
             <hr className="my-4" />
 
-            {/* Items */}
+            {/* Items Table */}
             <div className="mb-6">
               <h2 className="font-semibold text-gray-900 mb-2">Items</h2>
-              <div className="bg-gray-50 p-3 rounded-lg text-sm space-y-2">
-                {order.items?.map((item: any, idx: number) => (
-                  <div key={idx} className="flex justify-between items-center">
-                    <div className="flex items-center gap-3">
-                      {item.image && (
-                        <img
-                          src={item.image}
-                          alt={item.name}
-                          className="w-10 h-10 object-cover rounded-md border"
-                        />
-                      )}
-                      <span className="text-gray-800">{item.name}</span>
-                    </div>
-                    <div className="text-gray-900 font-medium">
-                      Qty: {item.quantity} | Price: ₹{item.price}
-                    </div>
-                  </div>
-                ))}
+              <div className="overflow-x-auto rounded-lg border border-gray-300">
+                <table className="min-w-full text-sm text-left">
+                  <thead className="bg-gray-200 text-gray-700 font-medium">
+                    <tr>
+                      <th className="px-4 py-2">Item</th>
+                      <th className="px-4 py-2">Quantity</th>
+                      <th className="px-4 py-2">Rate</th>
+                      <th className="px-4 py-2">Tax</th>
+                      <th className="px-4 py-2">Amount</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {order.items?.map((item: any, idx: number) => {
+                      const quantity = item.quantity || 0;
+                      const rate = item.price || 0;
+                      const tax = 0;
+                      const amount = quantity * rate + tax;
+                      const prod = item.product || item.productId;
+
+                      return (
+                        <tr key={idx} className="border-t">
+                          <td className="px-4 py-2 font-medium text-gray-800 flex items-center gap-2">
+                            {prod?.image && (
+                              <img
+                                src={prod.image}
+                                alt={prod.name}
+                                className="w-8 h-8 rounded object-cover border"
+                              />
+                            )}
+                            {prod?.name || "Unnamed Product"}
+                          </td>
+
+                          <td className="px-4 py-2 text-gray-800">
+                            {quantity}
+                          </td>
+                          <td className="px-4 py-2 text-gray-800">
+                            ₹{rate.toFixed(2)}
+                          </td>
+                          <td className="px-4 py-2 text-gray-800">
+                            ₹{tax.toFixed(2)}
+                          </td>
+                          <td className="px-4 py-2 font-semibold text-gray-900">
+                            ₹{amount.toFixed(2)}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
               </div>
             </div>
 
             <hr className="my-4" />
 
-            {/* Summary */}
-            <div className="mb-4">
-              <h2 className="font-semibold text-gray-900 mb-2">Summary</h2>
-              <p className="text-lg text-gray-900 font-medium">
-                <strong>Total:</strong> ₹{order.total}
-              </p>
-              {order.orderType === "Delivery" && (
-                <p className="text-lg text-gray-900 font-medium">
-                  <strong>Delivery Charge:</strong> ₹49
-                </p>
+            {/* Special Instructions + Summary + Signature side-by-side */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mt-6">
+              {/* Special Instructions - left side */}
+              {order.specialInstructions && (
+                <div>
+                  <h2 className="font-semibold text-gray-900 mb-2">
+                    Special Instructions
+                  </h2>
+                  <p className="italic text-gray-800 text-sm sm:text-base">
+                    {order.specialInstructions}
+                  </p>
+                </div>
               )}
+
+              {/* RIGHT SIDE: Summary with Signature BELOW it */}
+              <div className="no-break flex flex-col items-end">
+                {/* Summary */}
+                <div
+                  className="grid"
+                  style={{
+                    gridTemplateColumns: "auto minmax(60px, 1fr)",
+                    rowGap: "6px",
+                    columnGap: "12px",
+                    maxWidth: "320px",
+                    fontSize: "0.85rem",
+                  }}
+                >
+                  <span className="text-gray-600">Subtotal:</span>
+                  <span className="text-gray-900 font-medium">
+                    ₹{order.subtotal?.toFixed(2) || "0.00"}
+                  </span>
+
+                  <span className="text-gray-600">Discount:</span>
+                  <span className="text-gray-900 font-medium">
+                    ₹{order.discount?.toFixed(2) || "0.00"}
+                  </span>
+
+                  <span className="text-gray-600">Tax:</span>
+                  <span className="text-gray-900 font-medium">
+                    ₹{order.tax?.toFixed(2) || "0.00"}
+                  </span>
+
+                  {order.orderType === "Delivery" && (
+                    <>
+                      <span className="text-gray-600">Delivery Charge:</span>
+                      <span className="text-gray-900 font-medium">₹49</span>
+                    </>
+                  )}
+
+                  <div className="col-span-2 border-t border-gray-300 my-1" />
+
+                  <span className="text-gray-800 font-semibold text-sm">
+                    Total:
+                  </span>
+                  <span className="text-purple-800 font-bold text-sm">
+                    ₹{order.total?.toFixed(2)}
+                  </span>
+
+                  <span className="text-gray-600">Paid:</span>
+                  <span className="text-gray-900 font-medium">
+                    ₹{order.total?.toFixed(2)}
+                  </span>
+                </div>
+
+                {/* Signature - directly below summary */}
+                <div className=" no-break mt-12 text-center flex flex-col justify-center items-center w-auto">
+                  <p className="font-medium text-gray-700 mb-2">
+                    Authorized Signature
+                  </p>
+                  <div className="h-16 border-b border-gray-400 w-48" />
+                  <span
+                    style={{
+                      fontFamily: "'Brush Script MT', cursive",
+                      fontStyle: "italic",
+                      fontSize: "28px",
+                      color: "#6b21a8",
+                      display: "inline-block",
+                      marginTop: "0.5rem",
+                    }}
+                  >
+                    Bake Ree
+                  </span>
+                </div>
+              </div>
             </div>
 
-            {/* Special Instructions */}
-            {order.specialInstructions && (
-              <div className="mb-4">
-                <h2 className="font-semibold text-gray-900 mb-2">
-                  Special Instructions
-                </h2>
-                <p className="italic text-base text-gray-800">
-                  {order.specialInstructions}
-                </p>
-              </div>
-            )}
-
-            {/* Barcode Section */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-10 items-start">
+            {/* Barcode and Signature aligned in row */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 items-start mt-[-20vmin]">
+              {/* Barcode */}
               <div>
                 <p className="font-medium text-gray-700 mb-2">Scan Barcode</p>
-
-                {/* Show JsBarcode image for both screen + print */}
                 <div
                   ref={barcodeRef}
                   className="barcode-wrapper"
@@ -235,8 +325,8 @@ export default function OrderDetails() {
                     minHeight: "60px",
                     display: "flex",
                     alignItems: "flex-start",
-                    justifyContent: "flex-start", // ✅ Align barcode to the left
-                    maxWidth: "300px", // Limit width
+                    justifyContent: "flex-start",
+                    maxWidth: "300px",
                     width: "100%",
                   }}
                 >
@@ -245,32 +335,12 @@ export default function OrderDetails() {
                   </span>
                 </div>
               </div>
-
-              {/* Signature */}
-              <div className="text-center flex flex-col justify-center items-center">
-                <p className="font-medium text-gray-700 mb-2">
-                  Authorized Signature
-                </p>
-                <div className="h-16 border-b border-gray-400 w-48" />
-                <span
-                  style={{
-                    fontFamily: "'Brush Script MT', cursive",
-                    fontStyle: "italic",
-                    fontSize: "28px",
-                    color: "#6b21a8",
-                    display: "inline-block",
-                    marginTop: "0.5rem",
-                  }}
-                >
-                  Bake Ree
-                </span>
-              </div>
             </div>
 
             {/* Footer */}
-            <div className="mt-10 text-center text-sm text-gray-500 italic">
+            <div className="mt-6 text-sm italic text-gray-600">
               Thank you for ordering with Bake Ree! <br />
-              GSTIN: 09AAAPL1234C1ZV | Email: hello@bakeree.com
+              Terms & Conditions: Please retain this receipt for any queries.
             </div>
           </div>
         )}

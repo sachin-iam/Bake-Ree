@@ -5,6 +5,7 @@ import axios from "@/utils/axios";
 import { Pie, Bar } from "react-chartjs-2";
 import { ChartData } from "@/types/chart";
 
+
 const AnalyticsPage = () => {
   const [statusData, setStatusData] = useState<ChartData | null>(null);
   const [typeRevenue, setTypeRevenue] = useState<ChartData | null>(null);

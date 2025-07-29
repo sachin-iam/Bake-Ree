@@ -1,8 +1,5 @@
-const express = require("express");
-const router = express.Router();
-const Order = require("../models/Order");
-
-const {
+import express from "express";
+import {
   createOrder,
   getUserOrders,
   getMyOrders,
@@ -12,10 +9,11 @@ const {
   getAllOrders,
   getStatusDistribution,
   getTypeRevenue,
-  getRecentOrders, // ✅ Imported recent orders controller
-} = require("../controllers/orderController");
+  getRecentOrders
+} from "../controllers/orderController.js";
+import { protect, adminOnly } from "../middleware/authMiddleware.js";
 
-const { protect, adminOnly } = require("../middleware/authMiddleware");
+const router = express.Router();
 
 // ======================
 // 🛒 ORDER ROUTES
@@ -43,7 +41,7 @@ router.get("/kitchen", protect, adminOnly, getKitchenOrders);
 // 🕑 Get recent orders for analytics overview panel
 router.get("/recent", protect, adminOnly, getRecentOrders);
 
-// 📈 Get status distribution of all orders
+// 📈 Get status distribution of all orders 
 router.get("/status-distribution", protect, adminOnly, getStatusDistribution);
 
 // 💰 Get revenue by order type
@@ -59,4 +57,5 @@ router.get("/:id", protect, getOrderById);
 // ✅ Update order status (admin or kitchen)
 router.patch("/:id/status", protect, adminOnly, updateOrderStatus);
 
-module.exports = router;
+// ✅ Final export
+export default router;

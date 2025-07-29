@@ -3,8 +3,8 @@
 import { useEffect, useState } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import OrdersTable from "./components/OrdersTable";
-import AddProductModal from "./components/AddProductModal1";
 import OverviewPanel from "./components/OverviewPanel";
+import CustomerTable from "./components/CustomerTable"; 
 
 export default function AdminDashboard() {
   const router = useRouter();
@@ -78,21 +78,13 @@ export default function AdminDashboard() {
                 </div>
               ))}
             </div>
-
-            {showModal && (
-              <AddProductModal
-                onClose={() => setShowModal(false)}
-                onSave={addProduct}
-              />
-            )}
           </>
         );
 
       case "customers":
         return (
-          <div className="bg-white rounded-2xl p-6 shadow-md text-center text-[#2a2927]">
-            <p className="text-lg font-semibold">Customers</p>
-            <p className="text-sm mt-2 text-gray-500">Customer management coming soon...</p>
+          <div className="bg-white rounded-2xl p-6 shadow-md">
+            <CustomerTable />
           </div>
         );
 

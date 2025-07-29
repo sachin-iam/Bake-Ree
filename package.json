@@ -19,12 +19,12 @@
     "build": "next build",
     "start": "next start"
   },
-  "name": "bakee",
+  "name": "Bake-Ree",
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
   "repository": {
-    "type": "git",
+    "type": "module",
     "url": "git+https://github.com/sachin-iam/Bakee.git"
   },
   "keywords": [],
@@ -35,4 +35,5 @@
     "url": "https://github.com/sachin-iam/Bakee/issues"
   },
   "homepage": "https://github.com/sachin-iam/Bakee#readme"
+  
 }

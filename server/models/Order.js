@@ -1,54 +1,48 @@
-const mongoose = require('mongoose');
+import mongoose from "mongoose";
 
 const orderSchema = new mongoose.Schema(
   {
-    // 👤 User who placed the order
-    user: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
-
-    // 🧾 Items: full product-based list
+    user: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+    },
     items: [
       {
-        productId: { type: mongoose.Schema.Types.ObjectId, ref: 'Product', required: true },
+        product: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "Product",          // ⬅️ final: product (not productId)
+          required: true,
+        },
         quantity: { type: Number, required: true },
-        price: { type: Number, required: true }
-      }
+        price:    { type: Number, required: true },
+      },
     ],
-
-    // 💵 Simplified Items (for Kitchen UI or quick view)
     simplifiedItems: [
       {
-        name: { type: String },
-        price: { type: Number },
-        quantity: { type: Number }
-      }
+        name: String,
+        price: Number,
+        quantity: Number,
+      },
     ],
-
-    // 💰 Total price of the order
     totalAmount: { type: Number, required: true },
-
-    // 📦 Order status
     status: {
       type: String,
-      enum: ['Pending', 'Preparing', 'Ready', 'Delivered', 'Cancelled'],
-      default: 'Pending',
-      required: true
+      enum: ["Pending", "Preparing", "Ready", "Delivered", "Cancelled"],
+      default: "Pending",
+      required: true,
     },
-
-    // 🚚 Pickup or Delivery
     orderType: {
       type: String,
-      enum: ['Delivery', 'Pickup'],
-      default: 'Pickup',
-      required: true
+      enum: ["Delivery", "Pickup"],
+      default: "Pickup",
+      required: true,
     },
-
-    // 🚛 Optional delivery charge
     deliveryCharge: { type: Number, default: 0 },
-
-    // 📝 Optional notes
-    specialInstructions: { type: String }
+    specialInstructions: { type: String },
   },
-  { timestamps: true } // ⏱️ includes createdAt + updatedAt
+  { timestamps: true }
 );
 
-module.exports = mongoose.model('Order', orderSchema);
+const Order = mongoose.model("Order", orderSchema);
+export default Order;

@@ -1,7 +1,13 @@
-const express = require('express');
+import express from "express";
+import { getAnalyticsData, getWeeklyStats } from "../controllers/analyticsController.js";
+import { protect, adminOnly } from "../middleware/authMiddleware.js";
+
 const router = express.Router();
-const { getAnalyticsData } = require('../controllers/analyticsController');
 
-router.get('/admin/overview', getAnalyticsData);
+// 📊 Admin Overview Analytics
+router.get("/admin/overview", protect, adminOnly, getAnalyticsData);
 
-module.exports = router;
+// 📅 Weekly Orders & Revenue Analytics
+router.get("/weekly", protect, adminOnly, getWeeklyStats);
+
+export default router;

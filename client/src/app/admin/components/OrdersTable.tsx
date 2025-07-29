@@ -22,11 +22,15 @@ interface Order {
 }
 
 const statusStyles: Record<string, string> = {
-  Pending: "bg-yellow-100 text-yellow-800",
-  Preparing: "bg-orange-100 text-orange-800",
-  Ready: "bg-green-100 text-green-800",
-  Delivered: "bg-blue-100 text-blue-800",
-  Cancelled: "bg-red-100 text-red-800",
+  Pending:
+    "bg-gradient-to-r from-yellow-300 to-yellow-500 text-yellow-900 animate-pulse shadow-md",
+  Preparing:
+    "bg-gradient-to-r from-orange-300 to-orange-500 text-orange-900 animate-pulse shadow-md",
+  Ready:
+    "bg-gradient-to-r from-green-300 to-green-500 text-green-900 animate-pulse shadow-md",
+  Delivered:
+    "bg-gradient-to-r from-blue-300 to-blue-500 text-blue-900 shadow-md",
+  Cancelled: "bg-gradient-to-r from-red-300 to-red-500 text-red-900 shadow-md",
 };
 
 const OrdersTable = () => {
@@ -154,13 +158,13 @@ const OrdersTable = () => {
         <div className="flex gap-2 flex-wrap">
           <button
             onClick={exportToCSV}
-            className="bg-gray-100 hover:bg-gray-200 px-3 py-1 rounded text-sm text-gray-700"
+            className="bg-purple-100 hover:bg-gray-200 px-3 py-1 rounded-lg text-sm text-gray-700"
           >
             Export CSV
           </button>
           <button
             onClick={exportToXLSX}
-            className="bg-gray-100 hover:bg-gray-200 px-3 py-1 rounded text-sm text-gray-700"
+            className="bg-purple-100 hover:bg-gray-200 px-3 py-1 rounded-lg text-sm text-gray-700"
           >
             Export XLSX
           </button>
@@ -267,9 +271,9 @@ const OrdersTable = () => {
                     </td>
                     <td className="p-3">
                       <span
-                        className={`px-2 py-1 rounded-full text-sm font-medium ${
+                        className={`px-3 py-1 rounded-full text-sm font-semibold transition-all duration-300 ${
                           statusStyles[order.status] ||
-                          "bg-gray-100 text-gray-800"
+                          "bg-gray-200 text-gray-700"
                         }`}
                       >
                         {order.status}

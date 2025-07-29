@@ -10,7 +10,7 @@ import {
   BarElement,
   Title,
 } from "chart.js";
-import { Pie, Bar } from "react-chartjs-2";
+import { Pie, Bar, Line } from "react-chartjs-2";
 import { useEffect, useState } from "react";
 import { format } from "timeago.js";
 
@@ -24,9 +24,22 @@ ChartJS.register(
   Title
 );
 
+const statusStyles: Record<string, string> = {
+  Pending:
+    "bg-gradient-to-r from-yellow-300 to-yellow-500 text-yellow-900 animate-pulse shadow-md",
+  Preparing:
+    "bg-gradient-to-r from-orange-300 to-orange-500 text-orange-900 animate-pulse shadow-md",
+  Ready:
+    "bg-gradient-to-r from-green-300 to-green-500 text-green-900 animate-pulse shadow-md",
+  Delivered:
+    "bg-gradient-to-r from-blue-300 to-blue-500 text-blue-900 shadow-md",
+  Cancelled: "bg-gradient-to-r from-red-300 to-red-500 text-red-900 shadow-md",
+};
+
 const OverviewPanel = () => {
   const [analytics, setAnalytics] = useState<any>(null);
   const [recentOrders, setRecentOrders] = useState<any[]>([]);
+  const [weeklyStats, setWeeklyStats] = useState<any[]>([]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -34,34 +47,43 @@ const OverviewPanel = () => {
         const token =
           typeof window !== "undefined" ? localStorage.getItem("token") : null;
         if (!token) return;
+
         const headers = {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         };
 
-        const [analyticsRes, ordersRes] = await Promise.all([
+        const [analyticsRes, ordersRes, weeklyRes] = await Promise.all([
           fetch("http://localhost:5000/api/analytics/admin/overview", {
             headers,
           }),
-          fetch("http://localhost:5000/api/orders/recent", { headers }),
+          fetch("http://localhost:5000/api/orders/recent", {
+            headers,
+          }),
+          fetch("http://localhost:5000/api/analytics/weekly", {
+            headers,
+          }),
         ]);
 
-        if (!analyticsRes.ok || !ordersRes.ok) {
+        if (!analyticsRes.ok || !ordersRes.ok || !weeklyRes.ok) {
           console.error(
             "API call failed",
             await analyticsRes.text(),
-            await ordersRes.text()
+            await ordersRes.text(),
+            await weeklyRes.text()
           );
           return;
         }
 
         const analyticsData = await analyticsRes.json();
         const ordersData = await ordersRes.json();
+        const weeklyData = await weeklyRes.json();
 
         setAnalytics(analyticsData);
         setRecentOrders(ordersData);
+        setWeeklyStats(weeklyData);
       } catch (err) {
-        console.error("Error fetching analytics or orders:", err);
+        console.error("Error fetching analytics, orders or weekly stats:", err);
       }
     };
 
@@ -83,6 +105,28 @@ const OverviewPanel = () => {
   const orderTypeRevenue = Object.fromEntries(
     analytics.revenueByOrderType.map((item: any) => [item._id, item.revenue])
   );
+
+  const totalWeeklyRevenue = (stats: any[]) =>
+    stats.reduce((sum, s) => sum + s.totalRevenue, 0);
+
+  const totalWeeklyOrders = (stats: any[]) =>
+    stats.reduce((sum, s) => sum + s.orderCount, 0);
+
+  const averageOrderValue = (stats: any[]) => {
+    const totalRevenue = totalWeeklyRevenue(stats);
+    const totalOrders = totalWeeklyOrders(stats);
+    return totalOrders > 0 ? (totalRevenue / totalOrders).toFixed(2) : "0";
+  };
+
+  const getTopDay = (stats: any[]) => {
+    if (stats.length === 0) return "N/A";
+    const top = [...stats].sort((a, b) => b.totalRevenue - a.totalRevenue)[0];
+    return new Date(top._id).toLocaleDateString("en-IN", {
+      weekday: "short",
+      month: "short",
+      day: "numeric",
+    });
+  };
 
   return (
     <section className="text-[#2a2927]">
@@ -140,7 +184,23 @@ const OverviewPanel = () => {
                 responsive: true,
                 maintainAspectRatio: false,
                 plugins: {
-                  legend: { position: "bottom" },
+                  legend: {
+                    position: "bottom",
+                    labels: {
+                      color: "#374151",
+                      padding: 12,
+                      boxWidth: 14,
+                    },
+                  },
+                  tooltip: {
+                    callbacks: {
+                      label: function (context) {
+                        const label = context.label || "";
+                        const value = context.parsed;
+                        return `${label}: ${value} orders`;
+                      },
+                    },
+                  },
                 },
               }}
             />
@@ -183,7 +243,22 @@ const OverviewPanel = () => {
                   },
                 },
                 plugins: {
-                  legend: { display: false },
+                  tooltip: {
+                    callbacks: {
+                      label: function (context) {
+                        return `₹${context.parsed.y}`;
+                      },
+                    },
+                  },
+                  legend: {
+                    display: true,
+                    position: "bottom",
+                    labels: {
+                      color: "#4b5563",
+                      padding: 10,
+                      boxWidth: 12,
+                    },
+                  },
                 },
               }}
             />
@@ -191,8 +266,129 @@ const OverviewPanel = () => {
         </div>
       </div>
 
+      <div className="grid md:grid-cols-2 gap-6 mt-8">
+        {/* Left: Weekly Chart */}
+        <div className="bg-white rounded-2xl p-6 shadow-md">
+          <h3 className="text-lg font-semibold mb-4 text-purple-800">
+            Weekly Revenue & Orders
+          </h3>
+          <div className="h-[300px] w-full">
+            <Bar
+              data={{
+                labels: weeklyStats.map((s) => s._id),
+                datasets: [
+                  {
+                    label: "Revenue (₹)",
+                    data: weeklyStats.map((s) => s.totalRevenue),
+                    backgroundColor: "#c084fc",
+                    yAxisID: "y",
+                  },
+                  {
+                    label: "Orders",
+                    data: weeklyStats.map((s) => s.orderCount),
+                    backgroundColor: "#60a5fa",
+                    yAxisID: "y1",
+                  },
+                ],
+              }}
+              options={{
+                responsive: true,
+                interaction: {
+                  mode: "index" as const,
+                  intersect: false,
+                },
+                plugins: {
+                  tooltip: {
+                    callbacks: {
+                      label: (context) => {
+                        const label = context.dataset.label;
+                        const value = context.parsed.y;
+                        return label === "Orders"
+                          ? `${value} orders`
+                          : `₹${value}`;
+                      },
+                    },
+                  },
+                  legend: {
+                    position: "bottom",
+                    labels: {
+                      color: "#4b5563",
+                      padding: 10,
+                      boxWidth: 12,
+                    },
+                  },
+                },
+                scales: {
+                  y: {
+                    type: "linear",
+                    position: "left",
+                    ticks: {
+                      callback: (val) => `₹${val}`,
+                      color: "#4b5563",
+                    },
+                  },
+                  y1: {
+                    type: "linear",
+                    position: "right",
+                    grid: { drawOnChartArea: false },
+                    ticks: {
+                      color: "#4b5563",
+                    },
+                  },
+                },
+              }}
+            />
+          </div>
+        </div>
+
+        {/* Right: Weekly Stats Styled Summary */}
+        <div className="bg-white rounded-2xl p-6 shadow-md mt-8">
+          <h3 className="text-lg font-semibold text-purple-800 mb-4">
+            Weekly Highlights
+          </h3>
+
+          <div className="space-y-3">
+            {[
+              {
+                icon: "🏆",
+                label: "Top Day",
+                value: getTopDay(weeklyStats),
+              },
+              {
+                icon: "💰",
+                label: "Total Revenue",
+                value: `₹${totalWeeklyRevenue(weeklyStats)}`,
+              },
+              {
+                icon: "📦",
+                label: "Total Orders",
+                value: totalWeeklyOrders(weeklyStats),
+              },
+              {
+                icon: "📊",
+                label: "Avg. Order Value",
+                value: `₹${averageOrderValue(weeklyStats)}`,
+              },
+            ].map((item, idx) => (
+              <div
+                key={idx}
+                className="flex justify-between items-center bg-gray-50 hover:bg-gray-100 transition p-4 rounded-lg"
+              >
+                <div className="flex items-center space-x-3 text-[#2a2927]">
+                  <span className="text-xl">{item.icon}</span>
+                  <span className="font-medium">{item.label}</span>
+                </div>
+                <span className="font-semibold text-[#2a2927]">
+                  {item.value}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
       {/* Recent Orders */}
-      <div className="bg-white rounded-2xl p-6 shadow-md">
+      <div className="bg-white rounded-2xl p-6 shadow-md mt-8">
         <h2 className="text-lg font-semibold text-[#2a2927] mb-1">
           Recent Orders
         </h2>
@@ -211,19 +407,13 @@ const OverviewPanel = () => {
                   ORD-{order._id?.slice(-4).toUpperCase()}
                 </p>
                 <p className="text-sm text-gray-500">
-                  {order.customerName || "Unknown"}
+                  {order.user?.name || "Guest"}
                 </p>
               </div>
 
               <span
-                className={`text-xs font-medium px-2 py-1 rounded-full ${
-                  order.status === "completed"
-                    ? "bg-green-100 text-green-700"
-                    : order.status === "preparing"
-                    ? "bg-orange-100 text-orange-700"
-                    : order.status === "pending"
-                    ? "bg-yellow-100 text-yellow-700"
-                    : "bg-blue-100 text-blue-700"
+                className={`px-3 py-1 rounded-full text-sm font-semibold transition-all duration-300 ${
+                  statusStyles[order.status] || "bg-gray-200 text-gray-700"
                 }`}
               >
                 {order.status}

@@ -11,6 +11,7 @@
   "dependencies": {
     "@heroicons/react": "^2.2.0",
     "axios": "^1.11.0",
+    "chart": "^0.1.2",
     "chart.js": "^4.5.0",
     "classnames": "^2.5.1",
     "clsx": "^2.1.1",
@@ -49,5 +50,6 @@
     "tailwind-clip-path": "^1.0.0",
     "tailwindcss": "^4",
     "typescript": "^5"
-  }
+  },
+  "proxy": "http://localhost:5000"
 }

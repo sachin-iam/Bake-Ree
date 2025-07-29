@@ -1,23 +1,24 @@
-const express = require('express');
-const router = express.Router();
-
-const {
+import express from "express";
+import {
   getAllProducts,
   getFeaturedProducts,
-  createProduct,
+  addProduct,
   updateProduct,
-  deleteProduct
-} = require('../controllers/productController');
+  deleteProduct,
+} from "../controllers/productController.js";
+import { protect, adminOnly } from "../middleware/authMiddleware.js";
 
-const { protect, adminOnly } = require('../middleware/authMiddleware');
+const router = express.Router();
 
 // 🟢 Public routes
-router.get('/', getAllProducts);
-router.get('/featured', getFeaturedProducts);
+router.get("/", getAllProducts);
+router.get("/featured", getFeaturedProducts);
 
 // 🔐 Admin-only routes
-router.post('/', protect, adminOnly, createProduct);
-router.patch('/:id', protect, adminOnly, updateProduct);
-router.delete('/:id', protect, adminOnly, deleteProduct);
+router.post("/", protect, adminOnly, addProduct);
+router.put("/:id", protect, adminOnly, updateProduct);     // Full update
+router.patch("/:id", protect, adminOnly, updateProduct);   // Partial update
+router.delete("/:id", protect, adminOnly, deleteProduct);
 
-module.exports = router;
+// ✅ Proper ESM export
+export default router;

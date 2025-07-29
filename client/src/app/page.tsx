@@ -1,10 +1,10 @@
-import React from 'react'
-import ContactForm from './contact/contact'
-import FAQPage from './faq/faq'
-import Hero from './hero/hero'
-import Product from './products/product'
-import About from './about/about'
-import Review from './review/review'
+import React from "react";
+import ContactForm from "./contact/contact";
+import FAQPage from "./faq/faq";
+import Hero from "./hero/hero";
+import FeaturedProducts from "./product/FeaturedProducts";
+import About from "./about/about";
+import Review from "./review/review";
 
 const page = () => {
   return (
@@ -14,14 +14,14 @@ const page = () => {
       </section>
 
       <section id="products">
-        <Product />
+        <FeaturedProducts />
       </section>
 
       <section id="about">
         <About />
       </section>
 
-        <Review />
+      <Review />
 
       <section id="faq">
         <FAQPage />
@@ -31,7 +31,7 @@ const page = () => {
         <ContactForm />
       </section>
     </>
-  )
-}
+  );
+};
 
-export default page
+export default page;

@@ -1,6 +1,5 @@
 'use client'
 import { useState } from 'react'
-import AddProductModal from './AddProductModal1'
 
 export default function ProductForm() {
   const [showModal, setShowModal] = useState(false)
@@ -51,8 +50,6 @@ export default function ProductForm() {
           </div>
         ))}
       </div>
-
-      {showModal && <AddProductModal onClose={() => setShowModal(false)} onSave={addProduct} />}
     </>
   )
 }

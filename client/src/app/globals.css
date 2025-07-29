@@ -1,3 +1,30 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* -------------------- */
+/* Custom Utility Layer */
+/* -------------------- */
+@layer utilities {
+  .animate-scaleIn {
+    animation: scaleIn 0.2s ease-out;
+  }
+
+  @keyframes scaleIn {
+    from {
+      transform: scale(0.9);
+      opacity: 0;
+    }
+    to {
+      transform: scale(1);
+      opacity: 1;
+    }
+  }
+}
+
+/* -------------------- */
+/* Theming and Root Setup */
+/* -------------------- */
 @import "tailwindcss";
 
 :root {
@@ -25,7 +52,9 @@ body {
   font-family: Arial, Helvetica, sans-serif;
 }
 
-/* Phone container/input */
+/* -------------------- */
+/* Phone Input Styling (react-phone-input-2) */
+/* -------------------- */
 .custom-phone-container {
   width: 100%;
   position: relative;
@@ -44,7 +73,6 @@ body {
   box-shadow: none !important;
 }
 
-/* Dropdown box */
 .custom-phone-dropdown {
   background-color: #afa5f7 !important;
   color: #2a2927 !important;
@@ -57,20 +85,17 @@ body {
   z-index: 20 !important;
 }
 
-/* Dropdown list items */
 .custom-phone-dropdown .country {
   background-color: #afa5f7 !important;
   padding: 8px 12px !important;
   transition: none !important;
 }
 
-/* Remove hover effect */
 .custom-phone-dropdown .country:hover,
 .custom-phone-dropdown .country.highlight {
   background-color: #afa5f7 !important;
 }
 
-/* Search box */
 .custom-phone-search {
   background-color: #afa5f7 !important;
   color: #2a2927 !important;
@@ -82,36 +107,7 @@ body {
   font-size: 0.9rem !important;
 }
 
-/* Smooth scroll */
-html {
-  scroll-behavior: smooth;
-}
-
-/* Hide scrollbar utility */
-.no-scrollbar::-webkit-scrollbar {
-  display: none;
-}
-.no-scrollbar {
-  -ms-overflow-style: none;
-  scrollbar-width: none;
-}
-
-/* Remove dropdown arrow styles */
-.react-tel-input .flag-dropdown,
-.react-tel-input .selected-flag {
-  background-color: transparent !important;
-  box-shadow: none !important;
-  border: none !important;
-}
-
-/* Remove hover state of globe/flag area */
-.react-tel-input .flag-dropdown:hover,
-.react-tel-input .selected-flag:hover,
-.react-tel-input .flag-dropdown.open {
-  background-color: transparent !important;
-  box-shadow: none !important;
-}
-/* Core styling for react-phone-input-2 */
+/* Core react-tel-input styling */
 .react-tel-input .form-control {
   width: 100% !important;
   background-color: transparent !important;
@@ -124,19 +120,14 @@ html {
   height: 2.5rem !important;
 }
 
-/* Globe + flag section (left box) */
-.react-tel-input .flag-dropdown {
+.react-tel-input .flag-dropdown,
+.react-tel-input .selected-flag {
   background-color: transparent !important;
   border: none !important;
   box-shadow: none !important;
+  pointer-events: auto !important;
 }
 
-.react-tel-input .selected-flag {
-  background-color: transparent !important;
-  pointer-events: auto !important; /* ✅ re-enable click */
-}
-
-/* REMOVE HOVER EFFECT */
 .react-tel-input .flag-dropdown:hover,
 .react-tel-input .selected-flag:hover,
 .react-tel-input .flag-dropdown.open {
@@ -144,7 +135,6 @@ html {
   box-shadow: none !important;
 }
 
-/* Dropdown panel */
 .react-tel-input .country-list {
   background-color: #afa5f7 !important;
   color: #2a2927 !important;
@@ -155,17 +145,16 @@ html {
   overflow: auto;
 }
 
-/* Country row default and hover: SAME COLOR */
 .react-tel-input .country {
   background-color: #afa5f7 !important;
   padding: 8px 12px !important;
 }
+
 .react-tel-input .country:hover,
 .react-tel-input .country.highlight {
   background-color: #afa5f7 !important;
 }
 
-/* Search field */
 .react-tel-input .search-box {
   background-color: #afa5f7 !important;
   color: #2a2927 !important;
@@ -176,7 +165,26 @@ html {
   font-size: 0.9rem !important;
 }
 
+/* -------------------- */
+/* Scroll and Utility Helpers */
+/* -------------------- */
+html {
+  scroll-behavior: smooth;
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* -------------------- */
+/* Print Layout */
+/* -------------------- */
 @media print {
+  /* Hide everything except the print-area */
   body * {
     visibility: hidden !important;
   }
@@ -184,6 +192,8 @@ html {
   .print-area,
   .print-area * {
     visibility: visible !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
   }
 
   .print-area {
@@ -192,7 +202,6 @@ html {
     top: 0 !important;
     left: 0 !important;
     width: 100% !important;
-    max-width: 100% !important;
     padding: 2rem !important;
     margin: 0 !important;
     background: white !important;
@@ -207,8 +216,13 @@ html {
     display: none !important;
   }
 
+  .no-break {
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+
   .barcode-wrapper svg {
-    display: block !important;
+    display: block !important;  
     width: 100% !important;
     height: auto !important;
     max-width: 100% !important;
@@ -218,5 +232,11 @@ html {
   @page {
     size: A4;
     margin: 1in;
+  }
+
+  html, body {
+    margin: 0 !important;
+    padding: 0 !important;
+    -webkit-print-color-adjust: exact !important;
   }
 }
