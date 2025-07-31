@@ -1,7 +1,8 @@
 import { create } from 'zustand';
+import { persist } from 'zustand/middleware';
 
 type CartItem = {
-  id: number;
+  id: number;               // numeric id for cart
   name: string;
   image: string;
   price: number;
@@ -12,59 +13,77 @@ type CartStore = {
   cart: CartItem[];
   promoCode: string;
   discountRate: number;
+
   addToCart: (item: CartItem) => void;
-  removeFromCart: (id: number) => void;
-  updateQuantity: (id: number, delta: number) => void;
+  removeFromCart: (id: string | number) => void;
+  updateQuantity: (id: string | number, delta: number) => void;
   clearCart: () => void;
   setPromoCode: (code: string, discount: number) => void;
   clearPromoCode: () => void;
+
+  inc: (id: string | number) => void;
+  dec: (id: string | number) => void;
+  getQty: (id: string | number) => number;
+  totalItems: () => number;
 };
 
-export const useCartStore = create<CartStore>((set) => ({
-  cart: [],
-  promoCode: '',
-  discountRate: 0,
+export const useCartStore = create<CartStore>()(
+  persist(
+    (set, get) => ({
+      cart: [],
+      promoCode: '',
+      discountRate: 0,
 
-  addToCart: (newItem) =>
-    set((state) => {
-      const existing = state.cart.find((item) => item.id === newItem.id);
-      if (existing) {
-        return {
+      addToCart: (newItem) =>
+        set((state) => {
+          const existing = state.cart.find((item) => item.id === newItem.id);
+          if (existing) {
+            return {
+              cart: state.cart.map((item) =>
+                item.id === newItem.id
+                  ? { ...item, quantity: item.quantity + 1 }
+                  : item
+              ),
+            };
+          } else {
+            return { cart: [...state.cart, { ...newItem, quantity: 1 }] };
+          }
+        }),
+
+      removeFromCart: (id) =>
+        set((state) => ({
+          cart: state.cart.filter((item) => item.id !== id),
+        })),
+
+      updateQuantity: (id, delta) =>
+        set((state) => ({
           cart: state.cart.map((item) =>
-            item.id === newItem.id
-              ? { ...item, quantity: item.quantity + 1 }
+            item.id === id
+              ? { ...item, quantity: Math.max(1, item.quantity + delta) }
               : item
           ),
-        };
-      } else {
-        return { cart: [...state.cart, { ...newItem, quantity: 1 }] };
-      }
+        })),
+
+      clearCart: () => set({ cart: [] }),
+
+      setPromoCode: (code, discount) =>
+        set({
+          promoCode: code,
+          discountRate: discount,
+        }),
+
+      clearPromoCode: () =>
+        set({
+          promoCode: '',
+          discountRate: 0,
+        }),
+
+      inc: (id) => get().updateQuantity(id, 1),
+      dec: (id) => get().updateQuantity(id, -1),
+
+      getQty: (id) => get().cart.find((it) => it.id === id)?.quantity || 0,
+      totalItems: () => get().cart.reduce((acc, it) => acc + it.quantity, 0),
     }),
-
-  removeFromCart: (id) =>
-    set((state) => ({
-      cart: state.cart.filter((item) => item.id !== id),
-    })),
-
-  updateQuantity: (id, delta) =>
-    set((state) => ({
-      cart: state.cart.map((item) =>
-        item.id === id
-          ? { ...item, quantity: Math.max(1, item.quantity + delta) }
-          : item
-      ),
-    })),
-
-  clearCart: () => set({ cart: [] }),
-
-  setPromoCode: (code, discount) =>
-    set({
-      promoCode: code,
-      discountRate: discount,
-    }),
-
-  clearPromoCode: () => set({
-    promoCode: '',
-    discountRate: 0,
-  }),
-}));
+    { name: 'bakeree-cart' }
+  )
+);

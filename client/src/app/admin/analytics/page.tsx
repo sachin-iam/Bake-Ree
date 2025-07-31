@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import axios from "@/utils/axios";
-import { Pie, Bar } from "react-chartjs-2";
+import { Pie, Bar, Line } from "react-chartjs-2";
 import { ChartData } from "@/types/chart";
 
 

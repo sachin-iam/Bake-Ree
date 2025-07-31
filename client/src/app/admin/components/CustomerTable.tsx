@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import * as XLSX from "xlsx";
 import CustomerFormModal from "./CustomerFormModal";
 import ConfirmDialog from "./ConfirmDialog";
@@ -32,6 +32,10 @@ export default function CustomerTable() {
   const [editCustomer, setEditCustomer] = useState<Customer | null>(null);
   const [showConfirm, setShowConfirm] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
+
+  // --- header checkbox ref for indeterminate state
+  const headerCheckboxRef = useRef<HTMLInputElement | null>(null);
 
   const fetchCustomers = async () => {
     setLoading(true); // Start loading spinner
@@ -64,6 +68,12 @@ export default function CustomerTable() {
     fetchCustomers();
   }, [search, statusFilter, startDate, endDate, page]);
 
+  // clear selection when the page/filters change
+  useEffect(() => {
+    setSelectedIds([]);
+    setSelectAll(false);
+  }, [search, statusFilter, startDate, endDate, page]);
+
   const totalPages = Math.max(1, Math.ceil(total / limit));
 
   const handleDelete = async (id: string) => {
@@ -80,7 +90,6 @@ export default function CustomerTable() {
 
       if (!res.ok) throw new Error(data.message || "Delete failed");
 
-      // ✅ Show success toast (you must import toast from react-hot-toast)
       toast.success("Customer deleted");
 
       fetchCustomers(); // Refresh list
@@ -159,19 +168,43 @@ export default function CustomerTable() {
     XLSX.writeFile(workbook, "customers.xlsx");
   };
 
+  // per-row toggle
   const toggleSelect = (id: string) => {
     setSelectedIds((prev) =>
       prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
     );
   };
 
-  const toggleSelectAll = () => {
-    if (selectAll) {
-      setSelectedIds([]);
-    } else {
-      setSelectedIds(customers.map((c) => c._id));
+  // derived selection state for current page
+  const pageIds = customers.map((c) => c._id);
+  const allChecked =
+    pageIds.length > 0 && pageIds.every((id) => selectedIds.includes(id));
+  const someChecked =
+    pageIds.some((id) => selectedIds.includes(id)) && !allChecked;
+
+  // update header checkbox indeterminate state
+  useEffect(() => {
+    if (headerCheckboxRef.current) {
+      headerCheckboxRef.current.indeterminate = someChecked;
     }
-    setSelectAll(!selectAll);
+  }, [someChecked]);
+
+  // header checkbox toggles only the current page rows
+  const toggleSelectAllOnPage = () => {
+    if (allChecked) {
+      // unselect only this page
+      setSelectedIds((prev) => prev.filter((id) => !pageIds.includes(id)));
+      setSelectAll(false);
+    } else {
+      // add this page
+      setSelectedIds((prev) => Array.from(new Set([...prev, ...pageIds])));
+      setSelectAll(true);
+    }
+  };
+
+  // existing function name retained
+  const toggleSelectAll = () => {
+    toggleSelectAllOnPage();
   };
 
   return (
@@ -226,10 +259,16 @@ export default function CustomerTable() {
           >
             XLSX
           </button>
+
+          {/* Bulk Delete button (text) -> opens ConfirmDialog */}
           {selectedIds.length > 0 && (
             <button
-              onClick={() => setShowConfirm(true)}
+              onClick={() => {
+                setPendingDeleteId(null); // null => bulk mode
+                setShowConfirm(true); // open dialog
+              }}
               className="bg-red-600 hover:bg-red-700 text-white px-4 py-1.5 text-sm rounded-lg shadow-sm"
+              title="Delete selected"
             >
               Delete
             </button>
@@ -244,9 +283,10 @@ export default function CustomerTable() {
             <tr>
               <th className="px-4 py-2 font-medium text-center">
                 <input
+                  ref={headerCheckboxRef}
                   type="checkbox"
-                  checked={selectAll}
-                  onChange={toggleSelectAll}
+                  checked={allChecked}
+                  onChange={toggleSelectAllOnPage}
                 />
               </th>
 
@@ -288,9 +328,9 @@ export default function CustomerTable() {
                     <div className="flex items-center justify-center h-[48px]">
                       <input
                         type="checkbox"
-                        checked={selectAll}
-                        onChange={toggleSelectAll}
                         className="w-4 h-4"
+                        checked={selectedIds.includes(c._id)}
+                        onChange={() => toggleSelect(c._id)}
                       />
                     </div>
                   </td>
@@ -327,8 +367,12 @@ export default function CustomerTable() {
                       >
                         <Pencil size={16} />
                       </button>
+                      {/* Row delete -> opens ConfirmDialog for single delete */}
                       <button
-                        onClick={() => handleDelete(c._id)}
+                        onClick={() => {
+                          setPendingDeleteId(c._id);
+                          setShowConfirm(true);
+                        }}
                         className="text-red-600 hover:text-red-800"
                         title="Delete"
                       >
@@ -376,11 +420,30 @@ export default function CustomerTable() {
         onSave={fetchCustomers}
         editCustomer={editCustomer}
       />
+
       <ConfirmDialog
         open={showConfirm}
-        message="Are you sure you want to delete selected customers?"
-        onCancel={() => setShowConfirm(false)}
-        onConfirm={handleBulkDelete}
+        message={
+          pendingDeleteId
+            ? "Are you sure you want to delete this customer?"
+            : "Are you sure you want to delete selected customers?"
+        }
+        onCancel={() => {
+          setShowConfirm(false);
+          setPendingDeleteId(null);
+        }}
+        onConfirm={async () => {
+          try {
+            if (pendingDeleteId) {
+              await handleDelete(pendingDeleteId); // single
+            } else {
+              await handleBulkDelete(); // bulk
+            }
+          } finally {
+            setShowConfirm(false);
+            setPendingDeleteId(null);
+          }
+        }}
       />
     </div>
   );

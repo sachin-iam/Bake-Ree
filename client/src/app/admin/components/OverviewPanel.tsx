@@ -266,13 +266,16 @@ const OverviewPanel = () => {
         </div>
       </div>
 
-      <div className="grid md:grid-cols-2 gap-6 mt-8">
+      {/* Weekly section row */}
+      <div className="grid md:grid-cols-2 gap-6 mt-8 items-stretch">
         {/* Left: Weekly Chart */}
-        <div className="bg-white rounded-2xl p-6 shadow-md">
+        <div className="bg-white rounded-2xl p-6 shadow-md flex flex-col h-full min-h-[360px]">
           <h3 className="text-lg font-semibold mb-4 text-purple-800">
             Weekly Revenue & Orders
           </h3>
-          <div className="h-[300px] w-full">
+
+          {/* Chart takes the remaining height */}
+          <div className="flex-1">
             <Bar
               data={{
                 labels: weeklyStats.map((s) => s._id),
@@ -293,47 +296,33 @@ const OverviewPanel = () => {
               }}
               options={{
                 responsive: true,
-                interaction: {
-                  mode: "index" as const,
-                  intersect: false,
-                },
+                maintainAspectRatio: false, // keep this false
+                interaction: { mode: "index" as const, intersect: false },
                 plugins: {
                   tooltip: {
                     callbacks: {
-                      label: (context) => {
-                        const label = context.dataset.label;
-                        const value = context.parsed.y;
-                        return label === "Orders"
-                          ? `${value} orders`
-                          : `₹${value}`;
-                      },
+                      label: (context) =>
+                        context.dataset.label === "Orders"
+                          ? `${context.parsed.y} orders`
+                          : `₹${context.parsed.y}`,
                     },
                   },
                   legend: {
                     position: "bottom",
-                    labels: {
-                      color: "#4b5563",
-                      padding: 10,
-                      boxWidth: 12,
-                    },
+                    labels: { color: "#4b5563", padding: 10, boxWidth: 12 },
                   },
                 },
                 scales: {
                   y: {
                     type: "linear",
                     position: "left",
-                    ticks: {
-                      callback: (val) => `₹${val}`,
-                      color: "#4b5563",
-                    },
+                    ticks: { callback: (val) => `₹${val}`, color: "#4b5563" },
                   },
                   y1: {
                     type: "linear",
                     position: "right",
                     grid: { drawOnChartArea: false },
-                    ticks: {
-                      color: "#4b5563",
-                    },
+                    ticks: { color: "#4b5563" },
                   },
                 },
               }}
@@ -342,18 +331,15 @@ const OverviewPanel = () => {
         </div>
 
         {/* Right: Weekly Stats Styled Summary */}
-        <div className="bg-white rounded-2xl p-6 shadow-md mt-8">
+        <div className="bg-white rounded-2xl p-6 shadow-md flex flex-col h-full min-h-[360px]">
           <h3 className="text-lg font-semibold text-purple-800 mb-4">
             Weekly Highlights
           </h3>
 
-          <div className="space-y-3">
+          {/* Content fills card height nicely */}
+          <div className="flex-1 w-full">
             {[
-              {
-                icon: "🏆",
-                label: "Top Day",
-                value: getTopDay(weeklyStats),
-              },
+              { icon: "🏆", label: "Top Day", value: getTopDay(weeklyStats) },
               {
                 icon: "💰",
                 label: "Total Revenue",
@@ -372,7 +358,7 @@ const OverviewPanel = () => {
             ].map((item, idx) => (
               <div
                 key={idx}
-                className="flex justify-between items-center bg-gray-50 hover:bg-gray-100 transition p-4 rounded-lg"
+                className="flex justify-between items-center bg-gray-50 hover:bg-gray-100 transition p-4 rounded-lg mb-3 last:mb-0"
               >
                 <div className="flex items-center space-x-3 text-[#2a2927]">
                   <span className="text-xl">{item.icon}</span>

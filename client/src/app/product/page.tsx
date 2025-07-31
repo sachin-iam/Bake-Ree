@@ -1,28 +1,37 @@
-'use client'
-import React, { useEffect, useState } from 'react';
-import ProductGrid from './ProductGrid';
-import FilterBar from './FilterBar';
+"use client";
 
-const ProductPage = () => {
-  const [products, setProducts] = useState([]);
-  const [filtered, setFiltered] = useState([]);
+import React from "react";
+import ProductGrid from "./ProductGrid";
+import FilterBar from "./FilterBar";
 
-  useEffect(() => {
-    fetch('/api/products') // Adjust if your route is different
-      .then(res => res.json())
-      .then(data => {
-        setProducts(data);
-        setFiltered(data);
-      });
-  }, []);
+export default function ProductsPage() {
+  const [search, setSearch] = React.useState("");
+  const [category, setCategory] = React.useState<string>("all");
+  const [sort, setSort] = React.useState<"newest" | "price-asc" | "price-desc">("newest");
 
   return (
-    <div className="p-8 bg-[#f8f6f2] min-h-screen">
-      <h1 className="text-3xl font-bold text-center mb-6">Our Products</h1>
-      <FilterBar products={products} setFiltered={setFiltered} />
-      <ProductGrid products={filtered} />
-    </div>
-  );
-};
+    <main className="min-h-screen bg-[#efefe8]">
+      <section className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-10">
+        <div className="mb-8 mt-15">
+          <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-gray-900">
+            Our Signature Creations
+          </h1>
+          <p className="mt-2 text-gray-600">
+            Discover freshly baked delights crafted with care and the finest ingredients.
+          </p>
+        </div>
 
-export default ProductPage;
+        <FilterBar
+          search={search}
+          onSearch={setSearch}
+          category={category}
+          onCategory={setCategory}
+          sort={sort}
+          onSort={setSort}
+        />
+
+        <ProductGrid search={search} category={category} sort={sort} />
+      </section>
+    </main>
+  );
+}

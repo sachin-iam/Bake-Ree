@@ -1,39 +1,80 @@
 import mongoose from "mongoose";
 import Order from "../models/Order.js";
 
-// ✅ Place a new order (robust: item.product OR item.productId dono support)
+/**
+ * Place a new order
+ * - Client se productId ya product dono accept
+ * - Normalize: sirf `items.product` save karo
+ * - Server-side totals + deliveryCharge compute
+ * - Return populated order
+ */
 export const createOrder = async (req, res) => {
   try {
-    const itemsWithIds = req.body.items.map((item) => {
-      const pid = item.product || item.productId; // ⬅️ frontend ke hisaab se dono me se jo aaye
-      if (!mongoose.Types.ObjectId.isValid(pid)) {
-        throw new Error(`Invalid product ID: ${pid}`);
+    const { items = [], orderType = "Pickup" } = req.body;
+
+    if (!Array.isArray(items) || items.length === 0) {
+      return res.status(400).json({ error: "At least one item is required" });
+    }
+
+    // Normalize to `product` only
+    const normalizedItems = items.map((raw) => {
+      const idValue = raw.product || raw.productId; // accept either key
+      if (!mongoose.Types.ObjectId.isValid(idValue)) {
+        throw new Error(`Invalid product ID: ${idValue}`);
       }
       return {
-        ...item,
-        product: new mongoose.Types.ObjectId(pid), // ⬅️ final field: product
+        product: new mongoose.Types.ObjectId(idValue),
+        quantity: Number(raw.quantity) || 0,
+        price: Number(raw.price) || 0,
       };
     });
 
-    const order = await Order.create({
-      ...req.body,
-      items: itemsWithIds,
+    // Totals
+    const itemsTotal = normalizedItems.reduce(
+      (sum, it) => sum + it.quantity * it.price,
+      0
+    );
+    const discount = Number(req.body.discount ?? 0);
+    const tax = Number(req.body.tax ?? 0);
+    const deliveryCharge =
+      req.body.deliveryCharge !== undefined
+        ? Number(req.body.deliveryCharge)
+        : orderType === "Delivery"
+        ? 49
+        : 0;
+
+    const totalAmount = itemsTotal - discount + tax + deliveryCharge;
+
+    const created = await Order.create({
       user: req.user._id,
+      items: normalizedItems,
+      simplifiedItems: req.body.simplifiedItems,
+      orderType,
+      status: req.body.status,
+      deliveryCharge,
+      totalAmount,
+      specialInstructions: req.body.specialInstructions,
     });
 
-    res.status(201).json(order);
+    const order = await Order.findById(created._id)
+      .setOptions({ strictPopulate: false })
+      .populate("user", "name email phone")
+      .populate("items.product", "name image price");
+
+    return res.status(201).json(order);
   } catch (err) {
     console.error("Order creation error:", err);
-    res.status(500).json({ error: err.message });
+    return res.status(500).json({ error: err.message });
   }
 };
 
-// 👤 Legacy: Get all orders of the logged-in user (FIXED: by user, not params.id)
+// Logged-in user's orders
 export const getUserOrders = async (req, res) => {
   try {
     const orders = await Order.find({ user: req.user._id })
+      .setOptions({ strictPopulate: false })
       .populate("user", "name email phone")
-      .populate("items.product", "name image price"); // ⬅️ product
+      .populate("items.product", "name image price");
 
     res.status(200).json(orders);
   } catch (err) {
@@ -42,12 +83,13 @@ export const getUserOrders = async (req, res) => {
   }
 };
 
-// ✅ Modern: Get my orders (same as above)
+// My orders
 export const getMyOrders = async (req, res) => {
   try {
     const orders = await Order.find({ user: req.user._id })
+      .setOptions({ strictPopulate: false })
       .populate("user", "name email phone")
-      .populate("items.product", "name image price"); // ⬅️ product
+      .populate("items.product", "name image price");
 
     res.status(200).json(orders);
   } catch (error) {
@@ -56,12 +98,13 @@ export const getMyOrders = async (req, res) => {
   }
 };
 
-// 🔍 Get a specific order by ID
+// Order by ID (invoice page)
 export const getOrderById = async (req, res) => {
   try {
     const order = await Order.findById(req.params.id)
+      .setOptions({ strictPopulate: false })
       .populate("user", "name email phone")
-      .populate("items.product", "name image price"); // ⬅️ product
+      .populate("items.product", "name image price");
 
     if (!order) return res.status(404).json({ message: "Order not found" });
     res.json(order);
@@ -71,17 +114,27 @@ export const getOrderById = async (req, res) => {
   }
 };
 
-// 🛡️ Admin/Kitchen: Update status (no change)
+// Update status
 export const updateOrderStatus = async (req, res) => {
   try {
     if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
       return res.status(400).json({ error: "Invalid order ID" });
     }
+
+    const allowed = ["Pending", "Preparing", "Ready", "Delivered", "Cancelled"];
+    if (!allowed.includes(req.body.status)) {
+      return res.status(400).json({ error: "Invalid status value" });
+    }
+
     const order = await Order.findByIdAndUpdate(
       req.params.id,
       { status: req.body.status },
-      { new: true }
-    );
+      { new: true, runValidators: true }
+    )
+      .setOptions({ strictPopulate: false })
+      .populate("user", "name email phone")
+      .populate("items.product", "name image price");
+
     if (!order) return res.status(404).json({ error: "Order not found" });
     res.status(200).json(order);
   } catch (err) {
@@ -90,13 +143,14 @@ export const updateOrderStatus = async (req, res) => {
   }
 };
 
-// 👨‍🍳 Kitchen: already correct (items.product)
+// Kitchen (Pending/Preparing/Ready)
 export const getKitchenOrders = async (req, res) => {
   try {
     const orders = await Order.find({
       status: { $in: ["Pending", "Preparing", "Ready"] },
     })
-      .populate({ path: "items.product", select: "name image" }) // ⬅️ ensure image too
+      .setOptions({ strictPopulate: false })
+      .populate({ path: "items.product", select: "name image" })
       .sort({ createdAt: -1 });
 
     const cleaned = orders
@@ -113,15 +167,16 @@ export const getKitchenOrders = async (req, res) => {
   }
 };
 
-// 🧾 Admin: Get all (with optional status)
+// Admin: all orders (optional ?status)
 export const getAllOrders = async (req, res) => {
   try {
     const filter = {};
     if (req.query.status) filter.status = req.query.status;
 
     const orders = await Order.find(filter)
+      .setOptions({ strictPopulate: false })
       .populate("user", "name email phone")
-      .populate("items.product", "name image price"); // ⬅️ product
+      .populate("items.product", "name image price"); // 👈 ONLY product
 
     res.status(200).json(orders);
   } catch (err) {
@@ -130,7 +185,7 @@ export const getAllOrders = async (req, res) => {
   }
 };
 
-// 📈 Status distribution (no change)
+// Analytics
 export const getStatusDistribution = async (req, res) => {
   try {
     const orders = await Order.find();
@@ -146,10 +201,11 @@ export const getStatusDistribution = async (req, res) => {
   }
 };
 
-// 💰 Revenue by type (no change)
 export const getTypeRevenue = async (req, res) => {
   try {
-    const orders = await Order.find({ status: { $in: ["Ready", "Delivered"] } });
+    const orders = await Order.find({
+      status: { $in: ["Ready", "Delivered"] },
+    });
     const typeRevenue = {};
     orders.forEach((o) => {
       const type = o.orderType || "Unknown";
@@ -163,14 +219,14 @@ export const getTypeRevenue = async (req, res) => {
   }
 };
 
-// 🕑 Recent orders
 export const getRecentOrders = async (req, res) => {
   try {
     const recent = await Order.find()
       .sort({ createdAt: -1 })
       .limit(5)
+      .setOptions({ strictPopulate: false })
       .populate("user", "name")
-      .populate("items.product", "name image"); // ⬅️ product
+      .populate("items.product", "name image");
 
     res.status(200).json(recent);
   } catch (error) {

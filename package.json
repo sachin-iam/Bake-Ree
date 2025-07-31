@@ -25,7 +25,8 @@
   "main": "index.js",
   "repository": {
     "type": "module",
-    "url": "git+https://github.com/sachin-iam/Bakee.git"
+    "url": "git+https://github.com/sachin-iam/Bakee.git",
+    "workspaces": ["client", "server"]
   },
   "keywords": [],
   "author": "",

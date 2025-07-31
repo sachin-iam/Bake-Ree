@@ -86,6 +86,29 @@ export default function OrderDetails() {
     barcodeRef.current.appendChild(img);
   }, [order?._id]);
 
+  // ⬇️ Add this block just before `return (`
+  const itemsTotal = (order?.items ?? []).reduce(
+    (sum: number, it: any) =>
+      sum + (Number(it.quantity) || 0) * (Number(it.price) || 0),
+    0
+  );
+
+  const discount = Number(order?.discount ?? 0);
+  const tax = Number(order?.tax ?? 0);
+  const deliveryCharge = Number(
+    order?.deliveryCharge ?? (order?.orderType === "Delivery" ? 49 : 0) // fallback
+  );
+
+  // subtotal from items; total prefer server totalAmount else compute
+  const subtotal = itemsTotal;
+  const total =
+    typeof order?.totalAmount === "number"
+      ? order.totalAmount
+      : subtotal - discount + tax + deliveryCharge;
+
+  // (optional) If you don't have payment tracking, treat paid = total
+  const paid = Number(order?.paidAmount ?? total);
+
   return (
     <div className="min-h-screen bg-gray-100 px-4 sm:px-8 py-10">
       <div className="max-w-4xl mx-auto">
@@ -189,18 +212,17 @@ export default function OrderDetails() {
                       const rate = item.price || 0;
                       const tax = 0;
                       const amount = quantity * rate + tax;
+
+                      // fallback: product ya productId (purane orders ke liye)
                       const prod = item.product || item.productId;
+                      {
+                        prod?.name || "Unnamed Product";
+                      }
 
                       return (
                         <tr key={idx} className="border-t">
-                          <td className="px-4 py-2 font-medium text-gray-800 flex items-center gap-2">
-                            {prod?.image && (
-                              <img
-                                src={prod.image}
-                                alt={prod.name}
-                                className="w-8 h-8 rounded object-cover border"
-                              />
-                            )}
+                          {/* ✅ Only name, no photo */}
+                          <td className="px-4 py-2 font-medium text-gray-800">
                             {prod?.name || "Unnamed Product"}
                           </td>
 
@@ -255,23 +277,25 @@ export default function OrderDetails() {
                 >
                   <span className="text-gray-600">Subtotal:</span>
                   <span className="text-gray-900 font-medium">
-                    ₹{order.subtotal?.toFixed(2) || "0.00"}
+                    ₹{subtotal.toFixed(2)}
                   </span>
 
                   <span className="text-gray-600">Discount:</span>
                   <span className="text-gray-900 font-medium">
-                    ₹{order.discount?.toFixed(2) || "0.00"}
+                    ₹{discount.toFixed(2)}
                   </span>
 
                   <span className="text-gray-600">Tax:</span>
                   <span className="text-gray-900 font-medium">
-                    ₹{order.tax?.toFixed(2) || "0.00"}
+                    ₹{tax.toFixed(2)}
                   </span>
 
-                  {order.orderType === "Delivery" && (
+                  {deliveryCharge > 0 && (
                     <>
                       <span className="text-gray-600">Delivery Charge:</span>
-                      <span className="text-gray-900 font-medium">₹49</span>
+                      <span className="text-gray-900 font-medium">
+                        ₹{deliveryCharge.toFixed(2)}
+                      </span>
                     </>
                   )}
 
@@ -281,12 +305,12 @@ export default function OrderDetails() {
                     Total:
                   </span>
                   <span className="text-purple-800 font-bold text-sm">
-                    ₹{order.total?.toFixed(2)}
+                    ₹{total.toFixed(2)}
                   </span>
 
                   <span className="text-gray-600">Paid:</span>
                   <span className="text-gray-900 font-medium">
-                    ₹{order.total?.toFixed(2)}
+                    ₹{paid.toFixed(2)}
                   </span>
                 </div>
 
