@@ -8,7 +8,12 @@ out/
 
 # Ignore environment variables
 .env
+.env.*
 .env.local
+server/.env
+server/.env.*
+client/.env
+client/.env.*
 
 # Misc
 .DS_Store
