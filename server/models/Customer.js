@@ -7,6 +7,13 @@ const customerSchema = new mongoose.Schema(
     email: { type: String, required: true, unique: true },
     phone: { type: String },
     address: { type: String },
+    status: { type: String, default: "active" },
+    tags: [{ type: String }],
+    areaId: { type: mongoose.Schema.Types.ObjectId, ref: "Area" },
+    defaultAddressId: { type: mongoose.Schema.Types.ObjectId, ref: "Address" },
+    preferences: { type: Object },
+    dietary: [{ type: String }],
+    allergens: [{ type: String }],
     isActive: { type: Boolean, default: true },
   },
   { timestamps: true }

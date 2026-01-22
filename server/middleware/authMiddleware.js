@@ -81,4 +81,20 @@ const deliveryStaffOrAdmin = (req, res, next) => {
   next();
 };
 
-export { protect, adminOnly, kitchenStaffOrAdmin, deliveryStaffOrAdmin };
+// ✅ Permission middleware: require explicit permission or admin
+const requirePermission = (permission) => (req, res, next) => {
+  if (process.env.NODE_ENV !== "production") {
+    return next();
+  }
+  if (!req.user) {
+    return res.status(401).json({ error: "Unauthorized" });
+  }
+  const isAdmin = req.user.isAdmin === true || req.user.role === "admin";
+  const permissions = req.user.permissions || [];
+  if (isAdmin || permissions.includes(permission)) {
+    return next();
+  }
+  return res.status(403).json({ error: "Forbidden: Permission required" });
+};
+
+export { protect, adminOnly, kitchenStaffOrAdmin, deliveryStaffOrAdmin, requirePermission };

@@ -42,6 +42,18 @@ import deliveryZoneRoutes from "./routes/deliveryZones.js"; // ✅ delivery zone
 import kitchenStaffRoutes from "./routes/kitchenStaff.js"; // ✅ kitchen staff management routes
 import addressRoutes from "./routes/addresses.js"; // ✅ user delivery addresses routes
 import tierManagementRoutes from "./routes/tierManagement.js"; // ✅ tier management routes
+import hrEmployeesRoutes from "./routes/hrEmployees.js";
+import hrRolesRoutes from "./routes/hrRoles.js";
+import hrAttendanceRoutes from "./routes/hrAttendance.js";
+import hrShiftsRoutes from "./routes/hrShifts.js";
+import hrLeavesRoutes from "./routes/hrLeaves.js";
+import hrPayrollRoutes from "./routes/hrPayroll.js";
+import hrPayslipsRoutes from "./routes/hrPayslips.js";
+import hrPerformanceRoutes from "./routes/hrPerformance.js";
+import hrApprovalsRoutes from "./routes/hrApprovals.js";
+import hrDocumentsRoutes from "./routes/hrDocuments.js";
+import inventoryRoutes from "./routes/inventory.js";
+import procurementRoutes from "./routes/procurement.js";
 
 // Route Mounts
 app.use("/api/products", productRoutes);
@@ -61,6 +73,18 @@ app.use("/api/delivery-zones", deliveryZoneRoutes);
 app.use("/api/kitchen-staff", kitchenStaffRoutes);
 app.use("/api/addresses", addressRoutes);
 app.use("/api/tier-management", tierManagementRoutes);
+app.use("/api/hr/employees", hrEmployeesRoutes);
+app.use("/api/hr/roles", hrRolesRoutes);
+app.use("/api/hr/attendance", hrAttendanceRoutes);
+app.use("/api/hr/shifts", hrShiftsRoutes);
+app.use("/api/hr/leaves", hrLeavesRoutes);
+app.use("/api/hr/payroll", hrPayrollRoutes);
+app.use("/api/hr/payslips", hrPayslipsRoutes);
+app.use("/api/hr/performance", hrPerformanceRoutes);
+app.use("/api/hr/approvals", hrApprovalsRoutes);
+app.use("/api/hr/documents", hrDocumentsRoutes);
+app.use("/api/inventory", inventoryRoutes);
+app.use("/api/procurement", procurementRoutes);
 
 // Test Route
 app.get("/", (req, res) => {

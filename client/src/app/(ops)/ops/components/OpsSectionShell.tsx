@@ -19,7 +19,7 @@ export default function OpsSectionShell({
 }: OpsSectionShellProps) {
   return (
     <div className="space-y-6">
-      <section className="rounded-2xl border border-black/10 bg-white p-6 shadow-sm">
+      <section className="rounded-2xl border border-black/10 bg-white p-6">
         <p className="text-xs uppercase tracking-[0.2em] text-[#9a958d]">
           {subtitle}
         </p>
@@ -56,7 +56,7 @@ export default function OpsSectionShell({
           {items.map((item) => (
             <div
               key={item.title}
-              className="rounded-2xl border border-black/10 bg-white p-5 shadow-sm"
+              className="rounded-2xl border border-black/10 bg-white p-5"
             >
               <h3 className="text-lg font-semibold text-[#2a2927]">
                 {item.title}

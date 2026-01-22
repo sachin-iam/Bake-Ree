@@ -122,13 +122,18 @@ type KitchenStore = {
   dispatchRequests: DispatchRequest[];
   messages: KitchenMessage[];
   orderThreads: OrderThread[];
-  setOrderStatus: (orderId: string, status: KitchenOrderStatus) => void;
+  setOrderStatus: (
+    orderId: string,
+    status: KitchenOrderStatus,
+    hold?: KitchenOrder["hold"]
+  ) => void;
   createStockAlert: (payload: Omit<StockAlert, "id" | "status" | "createdAt">) => void;
   createOrderIssueAlert: (payload: Omit<OrderIssueAlert, "id" | "createdAt" | "targetRole">) => void;
   createDispatchRequest: (payload: Omit<DispatchRequest, "id" | "status" | "createdAt">) => void;
   assignDispatch: (orderId: string, assignee: string) => void;
   resolveAlert: (alertId: string) => void;
   acknowledgeAlert: (alertId: string, acknowledgedBy?: string) => void;
+  setAlertActionType: (alertId: string, actionType: StockActionType) => void;
   sendPing: (payload: Omit<KitchenMessage, "id" | "createdAt" | "sender"> & { sender?: string }) => void;
   addOrderMessage: (orderId: string, message: Omit<OrderThreadMessage, "id" | "createdAt">) => void;
 };
@@ -289,7 +294,7 @@ export const useKitchenStore = create<KitchenStore>((set, get) => ({
       ],
     },
   ],
-  setOrderStatus: (orderId, status) =>
+  setOrderStatus: (orderId, status, hold) =>
     set((state) => ({
       orders: state.orders.map((order) =>
         order.id === orderId
@@ -297,7 +302,7 @@ export const useKitchenStore = create<KitchenStore>((set, get) => ({
               ...order,
               status,
               updatedAt: nowIso(),
-              hold: status === "HOLD" ? order.hold : order.hold,
+              hold: status === "HOLD" ? hold ?? order.hold : null,
             }
           : order
       ),
@@ -363,6 +368,12 @@ export const useKitchenStore = create<KitchenStore>((set, get) => ({
         alert.id === alertId
           ? { ...alert, status: "ACK", acknowledgedBy: acknowledgedBy ?? "Admin" }
           : alert
+      ),
+    })),
+  setAlertActionType: (alertId, actionType) =>
+    set((state) => ({
+      stockAlerts: state.stockAlerts.map((alert) =>
+        alert.id === alertId ? { ...alert, actionType, status: "IN_PROGRESS" } : alert
       ),
     })),
   sendPing: (payload) =>

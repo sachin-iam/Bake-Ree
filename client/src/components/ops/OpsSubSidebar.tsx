@@ -3,11 +3,17 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import clsx from "clsx";
-import type { OpsSubNavGroup } from "@/lib/ops/nav";
+import { X } from "lucide-react";
+import { SUB_NAV_BY_MODULE, type ModuleId, type OpsSubNavGroup } from "@/lib/ops/nav";
 
 const getMatchScore = (pathname: string, href: string) => {
-  if (href.includes("[id]")) {
-    const base = href.split("[id]")[0];
+  const escaped = href.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const pattern = escaped.replace(/\\\[[^/]+?\\\]/g, "[^/]+");
+  const regex = new RegExp(`^${pattern}$`);
+
+  if (regex.test(pathname)) return href.length + 1000;
+  if (href.includes("[")) {
+    const base = href.split("[")[0];
     return pathname.startsWith(base) ? base.length : -1;
   }
   if (pathname === href) return href.length + 1000;
@@ -15,25 +21,57 @@ const getMatchScore = (pathname: string, href: string) => {
   return -1;
 };
 
+const resolveHref = (href: string) => href.replace(/\[[^/]+?\]/g, "1");
+
+export const getActiveModuleId = (pathname: string): ModuleId | null => {
+  if (pathname === "/ops") return null;
+  if (pathname.startsWith("/ops/hr")) return "hr";
+  if (pathname.startsWith("/ops/erp/staff")) return "staff";
+  if (pathname.startsWith("/ops/orders")) return "orders";
+  if (pathname.startsWith("/ops/production")) return "production";
+  if (pathname.startsWith("/ops/inventory")) return "inventory";
+  if (pathname.startsWith("/ops/procurement")) return "inventory";
+  if (pathname.startsWith("/ops/logistics")) return "logistics";
+  if (pathname.startsWith("/ops/finance")) return "finance";
+  if (pathname.startsWith("/ops/crm")) return "crm";
+  if (pathname.startsWith("/ops/loyalty")) return "loyalty";
+  if (pathname.startsWith("/ops/analytics")) return "analytics";
+  if (pathname.startsWith("/ops/settings")) return "settings";
+  return null;
+};
+
+const toGroups = (
+  moduleId: ModuleId,
+  moduleNav: (typeof SUB_NAV_BY_MODULE)[ModuleId]
+): OpsSubNavGroup[] => {
+  if (moduleNav.groups) return moduleNav.groups;
+  if (!moduleNav.items || moduleNav.items.length === 0) return [];
+  return [
+    {
+      key: `${moduleId}-items`,
+      label: moduleNav.title,
+      items: moduleNav.items,
+    },
+  ];
+};
+
 type OpsSubSidebarProps = {
-  title: string;
-  groups: OpsSubNavGroup[];
   isOpen: boolean;
   onClose: () => void;
 };
 
-export default function OpsSubSidebar({
-  title,
-  groups,
-  isOpen,
-  onClose,
-}: OpsSubSidebarProps) {
+export default function OpsSubSidebar({ isOpen, onClose }: OpsSubSidebarProps) {
   const pathname = usePathname();
+  const activeModuleId = getActiveModuleId(pathname);
+  const moduleNav = activeModuleId ? SUB_NAV_BY_MODULE[activeModuleId] : null;
+  const groups = activeModuleId && moduleNav ? toGroups(activeModuleId, moduleNav) : [];
   const activeHref = groups
     .flatMap((group) => group.items)
     .map((item) => ({ href: item.href, score: getMatchScore(pathname, item.href) }))
     .filter((item) => item.score >= 0)
     .sort((a, b) => b.score - a.score)[0]?.href;
+
+  if (!moduleNav || groups.length === 0) return null;
 
   return (
     <>
@@ -47,23 +85,26 @@ export default function OpsSubSidebar({
       />
       <aside
         className={clsx(
-          "fixed inset-y-0 left-0 z-40 flex w-72 flex-col translate-x-0 border-r border-black/10 bg-white px-5 py-6 shadow-lg transition-transform lg:sticky lg:top-6 lg:h-[calc(100vh-3rem)] lg:translate-x-0 lg:rounded-2xl lg:border lg:border-[#efe5d8] lg:shadow-sm",
-          isOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
+          "fixed inset-y-0 left-0 z-40 flex w-72 flex-col translate-x-0 border-r border-black/10 bg-white px-5 py-6 shadow-lg transition-all lg:static lg:inset-auto lg:h-full lg:w-full lg:rounded-none lg:border-0 lg:shadow-none lg:transform-none",
+          isOpen
+            ? "translate-x-0 lg:px-5 lg:py-6 lg:opacity-100"
+            : "-translate-x-full lg:pointer-events-none lg:overflow-hidden lg:px-0 lg:py-0 lg:opacity-0"
         )}
       >
         <div className="flex items-center justify-between">
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#6b4f2a]">
-              {title}
+              {moduleNav.title}
             </p>
             <p className="text-sm font-semibold text-[#2a2927]">Module Navigation</p>
           </div>
           <button
             type="button"
             onClick={onClose}
-            className="rounded-full border border-[#efe5d8] px-2 py-1 text-xs text-[#3b3b3b] transition hover:bg-[#f6efe6] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1f7a6b]/40 lg:hidden"
+            className="rounded-full border border-[#efe5d8] p-2 text-[#3b3b3b] transition hover:bg-[#f6efe6] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1f7a6b]/40"
+            aria-label="Close section navigation"
           >
-            Close
+            <X className="h-4 w-4" />
           </button>
         </div>
 
@@ -79,7 +120,7 @@ export default function OpsSubSidebar({
                   return (
                     <Link
                       key={item.href}
-                      href={item.href.replace("[id]", "1")}
+                      href={resolveHref(item.href)}
                       className={clsx(
                         "flex items-center justify-between rounded-lg px-3 py-2 text-sm transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1f7a6b]/40",
                         active

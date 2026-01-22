@@ -12,3 +12,6 @@ export interface Product {
   createdAt?: string;
   updatedAt?: string;
 }
+
+export * from "./inventory";
+export * from "./procurement";

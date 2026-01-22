@@ -13,6 +13,17 @@ const wishlistSchema = new mongoose.Schema(
       ref: "Product",
       required: true,
     },
+    customerId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Customer",
+      index: true,
+    },
+    items: [
+      {
+        productId: String,
+        addedAt: Date,
+      },
+    ],
   },
   { timestamps: true }
 );
@@ -24,4 +35,3 @@ const Wishlist =
   mongoose.models.Wishlist || mongoose.model("Wishlist", wishlistSchema);
 
 export default Wishlist;
-

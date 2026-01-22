@@ -29,7 +29,7 @@ export default function OpsHeader({
   actions,
 }: OpsHeaderProps) {
   return (
-    <header className="rounded-2xl border border-[#efe5d8] bg-white px-6 py-5 shadow-sm">
+    <header className="border-b border-[#efe5d8] bg-white px-4 py-5 -mx-4 -mt-4 lg:px-6 lg:-mx-6 lg:-mt-6">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div className="flex flex-col gap-2">
           <nav className="flex flex-wrap items-center gap-2 text-xs text-[#6b6b6b]">
