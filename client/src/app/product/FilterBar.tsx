@@ -23,52 +23,70 @@ export default function FilterBar({
   onSort,
 }: Props) {
   return (
-    <div className="mb-8 grid grid-cols-1 gap-4 md:grid-cols-3">
-      {/* Search */}
-      <div className="col-span-1 md:col-span-1">
+    <div className="mb-10 rounded-3xl border border-black/5 bg-white/60 p-4 shadow-sm backdrop-blur md:p-5">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-[1.2fr_1.8fr_0.6fr] md:items-center">
+        {/* Search */}
         <div className="relative">
           <input
             value={search}
             onChange={(e) => onSearch(e.target.value)}
-            placeholder="Search by name…"
+            placeholder="Search pastries, breads, cakes..."
             className={cn(
-              "w-full rounded-2xl bg-white/70 backdrop-blur",
-              "px-4 py-3 shadow-sm ring-1 ring-black/5 outline-none",
-              "focus:ring-2 focus:ring-emerald-400 transition"
+              "w-full rounded-2xl bg-[#f6f4ee] px-4 py-3 text-sm text-[#2a2927]",
+              "shadow-inner ring-1 ring-black/15 outline-none",
+              "focus:ring-2 focus:ring-emerald-500 transition"
             )}
           />
-          <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400">⌘K</span>
+          <span className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-xs text-[#6b6b65]">
+            Type to filter
+          </span>
         </div>
-      </div>
 
-      {/* Categories */}
-      <div className="flex flex-wrap items-center gap-2">
-        {categories.map((c) => (
-          <button
-            key={c}
-            onClick={() => onCategory(c)}
+        {/* Categories */}
+        <div className="flex flex-wrap items-center gap-2">
+          {categories.map((c) => (
+            <button
+              key={c}
+              onClick={() => onCategory(c)}
             className={cn(
               "px-4 py-2 rounded-full text-sm transition-all",
-              "border border-transparent bg-white/70 hover:bg-white shadow-sm",
-              category === c && "border-emerald-500 bg-emerald-50 text-emerald-700"
+              "border border-black/10 bg-white hover:bg-[#f4f7f2] shadow-sm",
+              category === c && "border-[#008066] bg-[#e7f0ea] text-[#005c45]"
             )}
-          >
-            {c}
-          </button>
-        ))}
-      </div>
+            >
+              {c === "all" ? "All" : c}
+            </button>
+          ))}
+        </div>
 
-      {/* Sort */}
-      <div className="flex items-center md:justify-end">
-        <select
-          value={sort}
-          onChange={(e) => onSort(e.target.value as any)}
-          className="rounded-2xl bg-white/70 backdrop-blur px-4 py-3 shadow-sm ring-1 ring-black/5 outline-none focus:ring-2 focus:ring-emerald-400 transition w-full md:w-auto"
-        >
-          <option value="newest">Newest</option>
-          <option value="price-asc">Price: Low → High</option>
-          <option value="price-desc">Price: High → Low</option>
-        </select>
+        {/* Sort */}
+        <div className="flex items-center md:justify-end">
+          <div className="relative w-full md:w-auto">
+            <select
+              value={sort}
+              onChange={(e) => onSort(e.target.value as any)}
+              className="w-full appearance-none rounded-full bg-white px-2 py-1 pr-4 text-sm text-[#2a2927] shadow-md ring-1 ring-black/15 border border-black/15 outline-none focus:ring-2 focus:ring-emerald-600 transition"
+            >
+              <option value="newest">Newest</option>
+              <option value="price-asc">Price: Low → High</option>
+              <option value="price-desc">Price: High → Low</option>
+            </select>
+            <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[#2a2927]">
+              <svg
+                aria-hidden="true"
+                viewBox="0 0 20 20"
+                className="h-4 w-4"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.8"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="M6 8l4 4 4-4" />
+              </svg>
+            </span>
+          </div>
+        </div>
       </div>
     </div>
   );

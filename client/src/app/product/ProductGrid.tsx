@@ -60,16 +60,16 @@ export default function ProductGrid({ search, category, sort }: Props) {
       )}
 
       {loading ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-7">
           {Array.from({ length: 6 }).map((_, i) => (
             <div
               key={i}
-              className="h-80 rounded-3xl bg-white/60 animate-pulse shadow-sm ring-1 ring-black/5"
+              className="h-80 rounded-[28px] bg-white/70 animate-pulse shadow-sm ring-1 ring-black/5"
             />
           ))}
         </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-7">
           {products.map((p) => (
             <ProductCard key={p._id} product={p} />
           ))}

@@ -12,10 +12,10 @@ export default function Hero() {
       <div className="max-w-7xl mx-auto mt-[-10px] flex flex-col md:flex-row items-center justify-center gap-16">
         {/* Left Text */}
         <div className="flex-1 pt-4">
-          <h1 className="text-7xl md:text-7xl font-light text-[#2a2927] leading-tight mb-6">
+          <h1 className="headline-serif text-7xl md:text-7xl font-light text-[#2a2927] leading-tight mb-6">
             Delicious
             <br />
-            Moments You
+            <span className="brush-underline">Moments</span> You
             <br />
             Can Count On
           </h1>
@@ -102,8 +102,8 @@ export default function Hero() {
               }`}
             >
               <Image
-                src="/images/baker.jpg"
-                alt="Baker Girl"
+                src="/images/product1.jpg"
+                alt="Bakery Product"
                 fill
                 className="object-cover"
               />

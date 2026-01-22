@@ -9,12 +9,8 @@ import {
   deleteCustomer,
   bulkDeleteCustomers,
 } from '../controllers/customerController.js';
-import { protect, adminOnly } from '../middleware/authMiddleware.js';
 
 const router = express.Router();
-
-// Apply authentication + admin access to all routes
-router.use(protect, adminOnly);
 
 // Customer API routes
 router.get('/', getCustomers);                   // Get customers with filters, pagination

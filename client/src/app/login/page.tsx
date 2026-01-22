@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { FcGoogle } from "react-icons/fc";
@@ -8,14 +8,24 @@ import { FaApple } from "react-icons/fa";
 import { HiEye, HiEyeOff } from "react-icons/hi";
 import { useRouter } from "next/navigation";
 import axios from "axios";
+import { consumeSessionExpiredFlag } from "@/utils/jwt";
+import toast from "react-hot-toast";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [sessionMessage, setSessionMessage] = useState<string | null>(null);
 
   const router = useRouter();
+
+  useEffect(() => {
+    if (consumeSessionExpiredFlag()) {
+      setSessionMessage("Session logged out. Please login again.");
+      toast.error("Session expired. Please login again.");
+    }
+  }, []);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -33,9 +43,10 @@ export default function LoginPage() {
       localStorage.setItem("token", token);
 
       // ✅ Redirect after login
+      toast.success("Logged in successfully");
       router.push("/dashboard"); // Change if needed
     } catch (error: any) {
-      alert(error.response?.data?.error || "Login failed. Please try again.");
+      toast.error(error.response?.data?.error || "Login failed. Please try again.");
       console.error("Login error:", error);
     } finally {
       setLoading(false);
@@ -52,6 +63,12 @@ export default function LoginPage() {
           </h1>
           <p className="mt-1 text-sm text-[#2a2927]">Login to your account</p>
         </div>
+
+        {sessionMessage && (
+          <div className="mb-4 rounded-xl bg-white/70 px-4 py-3 text-center text-sm text-[#2a2927]">
+            {sessionMessage}
+          </div>
+        )}
 
         {/* Email Login Form */}
         <form onSubmit={handleLogin} className="space-y-4 text-[#2a2927]">
@@ -83,8 +100,13 @@ export default function LoginPage() {
             </div>
           </div>
 
-          <div className="text-right text-sm text-[#2a2927] underline cursor-pointer hover:text-black">
-            Forgot password?
+          <div className="text-right">
+            <Link
+              href="/forgot-password"
+              className="text-sm text-[#2a2927] underline hover:text-black"
+            >
+              Forgot password?
+            </Link>
           </div>
 
           <button

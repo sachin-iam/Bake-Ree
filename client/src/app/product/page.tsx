@@ -10,14 +10,17 @@ export default function ProductsPage() {
   const [sort, setSort] = React.useState<"newest" | "price-asc" | "price-desc">("newest");
 
   return (
-    <main className="min-h-screen bg-[#efefe8]">
-      <section className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-10">
-        <div className="mb-8 mt-15">
-          <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-gray-900">
+    <main className="min-h-screen bg-[#f3f2ec] bg-[radial-gradient(circle_at_top,_#ffffff_0%,_#f3f2ec_55%,_#efece0_100%)]">
+      <section className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-28">
+        <div className="mb-10">
+          <span className="inline-flex items-center gap-2 rounded-full bg-[#e7f0ea] px-4 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-[#244438]">
+            Freshly Baked
+          </span>
+          <h1 className="mt-4 text-4xl sm:text-5xl font-light tracking-tight text-[#2a2927]">
             Our Signature Creations
           </h1>
-          <p className="mt-2 text-gray-600">
-            Discover freshly baked delights crafted with care and the finest ingredients.
+          <p className="mt-3 max-w-2xl text-base sm:text-lg text-[#4a4a46]">
+            Discover baked delights crafted with care, seasonal ingredients, and a touch of joy.
           </p>
         </div>
 

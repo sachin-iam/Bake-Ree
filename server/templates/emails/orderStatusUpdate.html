@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Order Status Update - Bake-Ree</title>
+</head>
+<body style="margin: 0; padding: 0; font-family: Arial, sans-serif; background-color: #f3f2ec;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f3f2ec; padding: 20px;">
+    <tr>
+      <td align="center">
+        <table width="600" cellpadding="0" cellspacing="0" style="background-color: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+          
+          <!-- Header -->
+          <tr>
+            <td style="background-color: #2a2927; padding: 30px; text-align: center;">
+              <h1 style="color: #ffffff; margin: 0; font-size: 28px;">🍞 Bake-Ree</h1>
+              <p style="color: #ffffff; margin: 10px 0 0 0; font-size: 16px;">Order Status Update</p>
+            </td>
+          </tr>
+
+          <!-- Content -->
+          <tr>
+            <td style="padding: 40px 30px;">
+              
+              <!-- Greeting -->
+              <p style="color: #2a2927; font-size: 18px; margin: 0 0 20px 0;">Hi {{customerName}},</p>
+              
+              <p style="color: #2a2927; font-size: 16px; line-height: 1.6; margin: 0 0 30px 0;">
+                {{statusMessage}}
+              </p>
+
+              <!-- Status Update Box -->
+              <div style="background-color: #f8f7ff; border-left: 4px solid #7f6df2; padding: 20px; margin: 20px 0; border-radius: 4px;">
+                <p style="margin: 0 0 15px 0; color: #2a2927; font-weight: bold; font-size: 18px;">
+                  Your order status has been updated to:
+                </p>
+                <p style="margin: 0; color: #7f6df2; font-size: 24px; font-weight: bold;">
+                  {{newStatus}}
+                </p>
+              </div>
+
+              <!-- Order Details -->
+              <div style="background-color: #f9f9f9; padding: 20px; margin: 20px 0; border-radius: 4px;">
+                <p style="margin: 0 0 10px 0; color: #2a2927; font-weight: bold; font-size: 16px;">
+                  Order #{{orderNumber}}
+                </p>
+                <p style="margin: 5px 0; color: #666; font-size: 14px;">
+                  <strong>Order Date:</strong> {{orderDate}}
+                </p>
+                <p style="margin: 5px 0; color: #666; font-size: 14px;">
+                  <strong>Order Type:</strong> {{orderType}}
+                </p>
+                <p style="margin: 5px 0; color: #666; font-size: 14px;">
+                  <strong>Total Amount:</strong> {{total}}
+                </p>
+              </div>
+
+              <!-- Status-specific messages -->
+              {{statusSpecificMessage}}
+
+              <!-- Footer Message -->
+              <p style="color: #2a2927; font-size: 16px; line-height: 1.6; margin: 30px 0 0 0;">
+                Thank you for choosing Bake-Ree! If you have any questions, please don't hesitate to contact us.
+              </p>
+
+              <p style="color: #2a2927; font-size: 16px; margin: 20px 0 0 0;">
+                Best regards,<br>
+                <strong>The Bake-Ree Team</strong>
+              </p>
+
+            </td>
+          </tr>
+
+          <!-- Footer -->
+          <tr>
+            <td style="background-color: #f3f2ec; padding: 20px; text-align: center; font-size: 12px; color: #666;">
+              <p style="margin: 0 0 10px 0;">
+                This is an automated email. Please do not reply to this message.
+              </p>
+              <p style="margin: 0;">
+                © 2024 Bake-Ree. All rights reserved.
+              </p>
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+

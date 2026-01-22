@@ -4,6 +4,24 @@ import { useCartStore } from "../../store/cartStore";
 import { useEffect, useState } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { FaStore } from "react-icons/fa";
+import axios from "axios";
+import toast from "react-hot-toast";
+
+interface Address {
+  _id: string;
+  label: string;
+  fullName: string;
+  phone: string;
+  addressLine1: string;
+  addressLine2?: string;
+  city: string;
+  state: string;
+  postalCode: string;
+  country: string;
+  isDefault: boolean;
+}
+
+const ADDRESS_LABELS = ["Home", "Work", "Office", "Other"];
 
 export default function PaymentPage() {
   const { cart, clearCart } = useCartStore();
@@ -17,6 +35,10 @@ export default function PaymentPage() {
   const [manualPincode, setManualPincode] = useState("");
   const [deliveryFee, setDeliveryFee] = useState(0);
   const [deliveryDistance, setDeliveryDistance] = useState(0);
+  const [addresses, setAddresses] = useState<Address[]>([]);
+  const [selectedAddressId, setSelectedAddressId] = useState("");
+  const [showAddressForm, setShowAddressForm] = useState(false);
+  const [saveAddressToProfile, setSaveAddressToProfile] = useState(false);
 
   const [form, setForm] = useState({
     firstName: "",
@@ -27,6 +49,17 @@ export default function PaymentPage() {
     expiry: "",
     cvv: "",
     cardName: "",
+  });
+  const [addressForm, setAddressForm] = useState({
+    label: "Home",
+    fullName: "",
+    phone: "",
+    addressLine1: "",
+    addressLine2: "",
+    city: "",
+    state: "",
+    postalCode: "",
+    country: "India",
   });
 
   const subtotal = parseFloat(searchParams.get("subtotal") || "0");
@@ -61,6 +94,61 @@ export default function PaymentPage() {
     }
   }, [orderType]);
 
+  useEffect(() => {
+    const loadProfileAndAddresses = async () => {
+      const token = localStorage.getItem("token");
+      if (!token) return;
+
+      try {
+        const [profileResponse, addressResponse] = await Promise.all([
+          axios.get("http://localhost:5000/api/auth/me", {
+            headers: { Authorization: `Bearer ${token}` },
+          }),
+          axios.get("http://localhost:5000/api/addresses", {
+            headers: { Authorization: `Bearer ${token}` },
+          }),
+        ]);
+
+        const user = profileResponse.data;
+        const nameParts = (user?.name || "").trim().split(/\s+/).filter(Boolean);
+        const firstName = nameParts[0] || "";
+        const lastName = nameParts.slice(1).join(" ");
+
+        setForm((prev) => ({
+          ...prev,
+          firstName: prev.firstName || firstName,
+          lastName: prev.lastName || lastName,
+          email: prev.email || user?.email || "",
+          phone: prev.phone || user?.phone || "",
+        }));
+
+        setAddressForm((prev) => ({
+          ...prev,
+          fullName: prev.fullName || user?.name || "",
+          phone: prev.phone || user?.phone || "",
+        }));
+
+        const loadedAddresses = Array.isArray(addressResponse.data)
+          ? addressResponse.data
+          : [];
+        setAddresses(loadedAddresses);
+        if (loadedAddresses.length > 0) {
+          const defaultAddress =
+            loadedAddresses.find((address: Address) => address.isDefault) ||
+            loadedAddresses[0];
+          setSelectedAddressId(defaultAddress._id);
+        } else {
+          setShowAddressForm(true);
+        }
+      } catch (error: any) {
+        console.error("Error loading checkout profile:", error);
+        toast.error("Failed to load saved details");
+      }
+    };
+
+    loadProfileAndAddresses();
+  }, []);
+
   const getDistance = async (lat: number, lng: number) => {
     const apiKey = "YOUR_GOOGLE_API_KEY"; // 🔐 Replace with actual key
 
@@ -94,8 +182,97 @@ export default function PaymentPage() {
     if (cart.length === 0) router.push("/cart");
   }, [cart, router]);
 
+  useEffect(() => {
+    if (orderType === "delivery") return;
+    setErrors((prev) => ({ ...prev, deliveryAddress: false }));
+    setShowAddressForm(false);
+  }, [orderType]);
+
+  useEffect(() => {
+    if (orderType !== "delivery") return;
+    if (selectedAddressId) return;
+    if (addresses.length === 0) {
+      setShowAddressForm(true);
+      return;
+    }
+    const defaultAddress =
+      addresses.find((address) => address.isDefault) || addresses[0];
+    setSelectedAddressId(defaultAddress._id);
+  }, [addresses, orderType, selectedAddressId]);
+
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setForm({ ...form, [e.target.name]: e.target.value });
+  };
+
+  const handleAddressInputChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+  ) => {
+    setAddressForm({ ...addressForm, [e.target.name]: e.target.value });
+  };
+
+  const handleUseNewAddress = async () => {
+    const nextErrors = {
+      label: !addressForm.label.trim(),
+      fullName: !addressForm.fullName.trim(),
+      phone: !addressForm.phone.trim(),
+      addressLine1: !addressForm.addressLine1.trim(),
+      city: !addressForm.city.trim(),
+      state: !addressForm.state.trim(),
+      postalCode: !addressForm.postalCode.trim(),
+      country: !addressForm.country.trim(),
+    };
+
+    setAddressErrors(nextErrors);
+
+    if (Object.values(nextErrors).some(Boolean)) return;
+
+    if (saveAddressToProfile) {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        toast.error("Please login to save this address");
+        return;
+      }
+
+      try {
+        const response = await axios.post(
+          "http://localhost:5000/api/addresses",
+          { ...addressForm, isDefault: false },
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          }
+        );
+        const savedAddress = response.data?.address;
+        if (savedAddress?._id) {
+          setAddresses((prev) => [savedAddress, ...prev]);
+          setSelectedAddressId(savedAddress._id);
+          setErrors((prev) => ({ ...prev, deliveryAddress: false }));
+          setShowAddressForm(false);
+          setSaveAddressToProfile(false);
+          setAddressForm({
+            label: "Home",
+            fullName: form.firstName
+              ? `${form.firstName} ${form.lastName}`.trim()
+              : addressForm.fullName,
+            phone: form.phone || addressForm.phone,
+            addressLine1: "",
+            addressLine2: "",
+            city: "",
+            state: "",
+            postalCode: "",
+            country: "India",
+          });
+          toast.success("Address saved to your profile");
+        }
+      } catch (error: any) {
+        console.error("Error saving address:", error);
+        toast.error(error.response?.data?.error || "Failed to save address");
+      }
+      return;
+    }
+
+    setSelectedAddressId("manual");
+    setErrors((prev) => ({ ...prev, deliveryAddress: false }));
+    toast.success("Address added for this order");
   };
 
   const [errors, setErrors] = useState({
@@ -108,15 +285,29 @@ export default function PaymentPage() {
     cvv: false,
     cardName: false,
     orderType: false,
+    deliveryAddress: false,
+  });
+  const [addressErrors, setAddressErrors] = useState({
+    label: false,
+    fullName: false,
+    phone: false,
+    addressLine1: false,
+    city: false,
+    state: false,
+    postalCode: false,
+    country: false,
   });
 
   const handleOrder = () => {
+    const needsDeliveryAddress =
+      orderType === "delivery" && !selectedAddressId;
     const newErrors = {
       firstName: !form.firstName.trim(),
       lastName: !form.lastName.trim(),
       email: !form.email.trim(),
       phone: !form.phone.trim(),
       orderType: !orderType,
+      deliveryAddress: needsDeliveryAddress,
       cardNumber: paymentMethod === "card" ? !form.cardNumber.trim() : false,
       expiry: paymentMethod === "card" ? !form.expiry.trim() : false,
       cvv: paymentMethod === "card" ? !form.cvv.trim() : false,
@@ -127,6 +318,7 @@ export default function PaymentPage() {
 
     if (Object.values(newErrors).some(Boolean)) return;
 
+    toast.success("Order placed successfully");
     const query = new URLSearchParams({
       orderType,
       name: `${form.firstName} ${form.lastName}`,
@@ -138,27 +330,27 @@ export default function PaymentPage() {
   };
 
   return (
-    <section className="min-h-screen bg-[#f3f2ec] px-4 pt-32 pb-16">
+    <section className="min-h-screen bg-gradient-to-b from-[#f7f5f0] via-[#f3f2ec] to-[#efeee9] px-4 pt-32 pb-16">
       <div className="max-w-6xl mx-auto grid md:grid-cols-3 gap-8">
         {/* Left Form Section */}
         <div className="md:col-span-2 space-y-6">
           {/* Order Type */}
           <div
-            className={`bg-white p-6 rounded-2xl border ${
-              errors.orderType ? "border-red-500" : "border-[#2a2927]"
-            } shadow-sm`}
+            className={`bg-white p-6 rounded-3xl border ${
+              errors.orderType ? "border-red-500" : "border-black/5"
+            } shadow-[0_10px_28px_rgba(20,15,10,0.06)]`}
           >
-            <h2 className="text-xl font-bold text-[#2a2927] mb-4 flex items-center gap-2">
-              <FaStore className="text-[#2a2927]" /> Order Type
+            <h2 className="text-xl font-semibold text-[#1f1d1a] mb-4 flex items-center gap-2">
+              <FaStore className="text-[#1f1d1a]" /> Order Type
             </h2>
 
             <div className="space-y-3">
               {/* Pickup Option */}
               <label
-                className={`flex items-center justify-between border rounded-xl p-4 cursor-pointer ${
+                className={`flex items-center justify-between border rounded-2xl p-4 cursor-pointer transition ${
                   orderType === "pickup"
-                    ? "border-[#7f6df2] bg-[#f8f7ff]"
-                    : "border-[#ddd]"
+                    ? "border-[#2a2927] bg-[#f8f7f4]"
+                    : "border-black/10 hover:border-[#2a2927]/40"
                 }`}
               >
                 <div className="flex items-center gap-3 text-[#2a2927]">
@@ -168,6 +360,7 @@ export default function PaymentPage() {
                     value="pickup"
                     checked={orderType === "pickup"}
                     onChange={(e) => setOrderType(e.target.value)}
+                    className="accent-[#2a2927]"
                   />
                   <div>
                     <p className="font-medium">Outlet Pickup</p>
@@ -180,10 +373,10 @@ export default function PaymentPage() {
 
               {/* Delivery Option */}
               <label
-                className={`flex items-center justify-between border rounded-xl p-4 cursor-pointer ${
+                className={`flex items-center justify-between border rounded-2xl p-4 cursor-pointer transition ${
                   orderType === "delivery"
-                    ? "border-[#7f6df2] bg-[#f8f7ff]"
-                    : "border-[#ddd]"
+                    ? "border-[#2a2927] bg-[#f8f7f4]"
+                    : "border-black/10 hover:border-[#2a2927]/40"
                 }`}
               >
                 <div className="flex items-center gap-3 text-[#2a2927]">
@@ -193,11 +386,12 @@ export default function PaymentPage() {
                     value="delivery"
                     checked={orderType === "delivery"}
                     onChange={(e) => setOrderType(e.target.value)}
+                    className="accent-[#2a2927]"
                   />
                   <div>
                     <p className="font-medium">
                       Delivery{" "}
-                      <span className="text-sm text-[#7f6df2]">
+                      <span className="text-sm text-[#6a4b2a]">
                         (₹10/km after 2 km)
                       </span>
                     </p>
@@ -223,7 +417,7 @@ export default function PaymentPage() {
                     placeholder="Enter your pincode"
                     value={manualPincode}
                     onChange={(e) => setManualPincode(e.target.value)}
-                    className="border border-[#2a2927] p-2 rounded w-full text-[#2a2927]"
+                    className="border border-black/10 p-3 rounded-xl w-full text-[#2a2927] bg-[#f8f7f4] focus:outline-none focus:ring-2 focus:ring-[#2a2927]/15"
                   />
                   <p className="text-xs text-red-600 mt-1">
                     ⚠️ Location denied. Estimate using your pincode.
@@ -241,8 +435,8 @@ export default function PaymentPage() {
           </div>
 
           {/* Contact Info */}
-          <div className="bg-white p-6 rounded-2xl border border-[#2a2927] shadow-sm space-y-4">
-            <h2 className="text-xl font-bold text-[#2a2927]">
+          <div className="bg-white p-6 rounded-3xl border border-black/5 shadow-[0_10px_28px_rgba(20,15,10,0.06)] space-y-4">
+            <h2 className="text-xl font-semibold text-[#1f1d1a]">
               Contact Information
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -253,8 +447,8 @@ export default function PaymentPage() {
                   value={form.firstName}
                   onChange={handleInputChange}
                   className={`w-full border ${
-                    errors.firstName ? "border-red-500" : "border-[#2a2927]"
-                  } p-3 rounded-md bg-transparent text-[#2a2927]`}
+                    errors.firstName ? "border-red-500" : "border-black/10"
+                  } p-3 rounded-xl bg-[#f8f7f4] text-[#2a2927] focus:outline-none focus:ring-2 focus:ring-[#2a2927]/15`}
                 />
                 {errors.firstName && (
                   <p className="text-xs text-red-600 mt-1">
@@ -270,8 +464,8 @@ export default function PaymentPage() {
                   value={form.lastName}
                   onChange={handleInputChange}
                   className={`w-full border ${
-                    errors.lastName ? "border-red-500" : "border-[#2a2927]"
-                  } p-3 rounded-md bg-transparent text-[#2a2927]`}
+                    errors.lastName ? "border-red-500" : "border-black/10"
+                  } p-3 rounded-xl bg-[#f8f7f4] text-[#2a2927] focus:outline-none focus:ring-2 focus:ring-[#2a2927]/15`}
                 />
                 {errors.lastName && (
                   <p className="text-xs text-red-600 mt-1">
@@ -289,8 +483,8 @@ export default function PaymentPage() {
                 value={form.email}
                 onChange={handleInputChange}
                 className={`w-full border ${
-                  errors.email ? "border-red-500" : "border-[#2a2927]"
-                } p-3 rounded-md bg-transparent text-[#2a2927]`}
+                  errors.email ? "border-red-500" : "border-black/10"
+                } p-3 rounded-xl bg-[#f8f7f4] text-[#2a2927] focus:outline-none focus:ring-2 focus:ring-[#2a2927]/15`}
               />
               {errors.email && (
                 <p className="text-xs text-red-600 mt-1">Email is required</p>
@@ -305,8 +499,8 @@ export default function PaymentPage() {
                 value={form.phone}
                 onChange={handleInputChange}
                 className={`w-full border ${
-                  errors.phone ? "border-red-500" : "border-[#2a2927]"
-                } p-3 rounded-md bg-transparent text-[#2a2927]`}
+                  errors.phone ? "border-red-500" : "border-black/10"
+                } p-3 rounded-xl bg-[#f8f7f4] text-[#2a2927] focus:outline-none focus:ring-2 focus:ring-[#2a2927]/15`}
               />
               {errors.phone && (
                 <p className="text-xs text-red-600 mt-1">
@@ -316,29 +510,315 @@ export default function PaymentPage() {
             </div>
           </div>
 
+          {/* Delivery Address */}
+          {orderType === "delivery" && (
+            <div className="bg-white p-6 rounded-3xl border border-black/5 shadow-[0_10px_28px_rgba(20,15,10,0.06)] space-y-4">
+              <div className="flex items-center justify-between">
+                <h2 className="text-xl font-semibold text-[#1f1d1a]">
+                  Delivery Address
+                </h2>
+                <button
+                  type="button"
+                  onClick={() => setShowAddressForm((prev) => !prev)}
+                  className="text-sm text-[#2a2927] hover:text-[#1f1d1a] underline"
+                >
+                  {showAddressForm ? "Hide form" : "Add new address"}
+                </button>
+              </div>
+
+              {addresses.length > 0 ? (
+                <div className="space-y-3">
+                  {addresses.map((address) => (
+                    <label
+                      key={address._id}
+                      className={`flex items-start gap-3 border rounded-2xl p-4 cursor-pointer transition ${
+                        selectedAddressId === address._id
+                          ? "border-[#2a2927] bg-[#f8f7f4]"
+                          : "border-black/10 hover:border-[#2a2927]/40"
+                      }`}
+                    >
+                      <input
+                        type="radio"
+                        name="deliveryAddress"
+                        checked={selectedAddressId === address._id}
+                        onChange={() => {
+                          setSelectedAddressId(address._id);
+                          setErrors((prev) => ({
+                            ...prev,
+                            deliveryAddress: false,
+                          }));
+                        }}
+                        className="mt-1 accent-[#2a2927]"
+                      />
+                      <div className="text-sm text-[#2a2927]">
+                        <div className="flex items-center gap-2">
+                          <p className="font-medium">{address.label}</p>
+                          {address.isDefault && (
+                            <span className="text-xs text-[#6a4b2a]">
+                              Default
+                            </span>
+                          )}
+                        </div>
+                        <p>{address.fullName}</p>
+                        <p>{address.phone}</p>
+                        <p>{address.addressLine1}</p>
+                        {address.addressLine2 && <p>{address.addressLine2}</p>}
+                        <p>
+                          {address.city}, {address.state} {address.postalCode}
+                        </p>
+                        <p>{address.country}</p>
+                      </div>
+                    </label>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-sm text-gray-500">
+                  No saved addresses yet. Add one below to continue.
+                </p>
+              )}
+
+              {showAddressForm && (
+                <div className="border border-black/10 rounded-2xl p-4 bg-[#f8f7f4] space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-xs text-gray-600 mb-1">
+                        Label
+                      </label>
+                      <select
+                        name="label"
+                        value={addressForm.label}
+                        onChange={handleAddressInputChange}
+                        className={`w-full border ${
+                          addressErrors.label ? "border-red-500" : "border-black/10"
+                        } p-3 rounded-xl bg-white text-[#2a2927] focus:outline-none focus:ring-2 focus:ring-[#2a2927]/15`}
+                      >
+                        {ADDRESS_LABELS.map((label) => (
+                          <option key={label} value={label}>
+                            {label}
+                          </option>
+                        ))}
+                      </select>
+                      {addressErrors.label && (
+                        <p className="text-xs text-red-600 mt-1">
+                          Label is required
+                        </p>
+                      )}
+                    </div>
+                    <div>
+                      <label className="block text-xs text-gray-600 mb-1">
+                        Full Name
+                      </label>
+                      <input
+                        name="fullName"
+                        value={addressForm.fullName}
+                        onChange={handleAddressInputChange}
+                        className={`w-full border ${
+                          addressErrors.fullName ? "border-red-500" : "border-black/10"
+                        } p-3 rounded-xl bg-white text-[#2a2927] focus:outline-none focus:ring-2 focus:ring-[#2a2927]/15`}
+                      />
+                      {addressErrors.fullName && (
+                        <p className="text-xs text-red-600 mt-1">
+                          Full name is required
+                        </p>
+                      )}
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs text-gray-600 mb-1">
+                      Phone
+                    </label>
+                    <input
+                      name="phone"
+                      value={addressForm.phone}
+                      onChange={handleAddressInputChange}
+                      className={`w-full border ${
+                        addressErrors.phone ? "border-red-500" : "border-black/10"
+                      } p-3 rounded-xl bg-white text-[#2a2927] focus:outline-none focus:ring-2 focus:ring-[#2a2927]/15`}
+                    />
+                    {addressErrors.phone && (
+                      <p className="text-xs text-red-600 mt-1">
+                        Phone is required
+                      </p>
+                    )}
+                  </div>
+
+                  <div>
+                    <label className="block text-xs text-gray-600 mb-1">
+                      Address Line 1
+                    </label>
+                    <input
+                      name="addressLine1"
+                      value={addressForm.addressLine1}
+                      onChange={handleAddressInputChange}
+                      className={`w-full border ${
+                        addressErrors.addressLine1
+                          ? "border-red-500"
+                          : "border-black/10"
+                      } p-3 rounded-xl bg-white text-[#2a2927] focus:outline-none focus:ring-2 focus:ring-[#2a2927]/15`}
+                    />
+                    {addressErrors.addressLine1 && (
+                      <p className="text-xs text-red-600 mt-1">
+                        Address line 1 is required
+                      </p>
+                    )}
+                  </div>
+
+                  <div>
+                    <label className="block text-xs text-gray-600 mb-1">
+                      Address Line 2 (Optional)
+                    </label>
+                    <input
+                      name="addressLine2"
+                      value={addressForm.addressLine2}
+                      onChange={handleAddressInputChange}
+                      className="w-full border border-black/10 p-3 rounded-xl bg-white text-[#2a2927] focus:outline-none focus:ring-2 focus:ring-[#2a2927]/15"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div>
+                      <label className="block text-xs text-gray-600 mb-1">
+                        City
+                      </label>
+                      <input
+                        name="city"
+                        value={addressForm.city}
+                        onChange={handleAddressInputChange}
+                        className={`w-full border ${
+                          addressErrors.city ? "border-red-500" : "border-black/10"
+                        } p-3 rounded-xl bg-white text-[#2a2927] focus:outline-none focus:ring-2 focus:ring-[#2a2927]/15`}
+                      />
+                      {addressErrors.city && (
+                        <p className="text-xs text-red-600 mt-1">
+                          City is required
+                        </p>
+                      )}
+                    </div>
+                    <div>
+                      <label className="block text-xs text-gray-600 mb-1">
+                        State
+                      </label>
+                      <input
+                        name="state"
+                        value={addressForm.state}
+                        onChange={handleAddressInputChange}
+                        className={`w-full border ${
+                          addressErrors.state ? "border-red-500" : "border-black/10"
+                        } p-3 rounded-xl bg-white text-[#2a2927] focus:outline-none focus:ring-2 focus:ring-[#2a2927]/15`}
+                      />
+                      {addressErrors.state && (
+                        <p className="text-xs text-red-600 mt-1">
+                          State is required
+                        </p>
+                      )}
+                    </div>
+                    <div>
+                      <label className="block text-xs text-gray-600 mb-1">
+                        Postal Code
+                      </label>
+                      <input
+                        name="postalCode"
+                        value={addressForm.postalCode}
+                        onChange={handleAddressInputChange}
+                        className={`w-full border ${
+                          addressErrors.postalCode
+                            ? "border-red-500"
+                            : "border-black/10"
+                        } p-3 rounded-xl bg-white text-[#2a2927] focus:outline-none focus:ring-2 focus:ring-[#2a2927]/15`}
+                      />
+                      {addressErrors.postalCode && (
+                        <p className="text-xs text-red-600 mt-1">
+                          Postal code is required
+                        </p>
+                      )}
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs text-gray-600 mb-1">
+                      Country
+                    </label>
+                    <input
+                      name="country"
+                      value={addressForm.country}
+                      onChange={handleAddressInputChange}
+                      className={`w-full border ${
+                        addressErrors.country ? "border-red-500" : "border-black/10"
+                      } p-3 rounded-xl bg-white text-[#2a2927] focus:outline-none focus:ring-2 focus:ring-[#2a2927]/15`}
+                    />
+                    {addressErrors.country && (
+                      <p className="text-xs text-red-600 mt-1">
+                        Country is required
+                      </p>
+                    )}
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      id="saveAddressToProfile"
+                      checked={saveAddressToProfile}
+                      onChange={(e) => setSaveAddressToProfile(e.target.checked)}
+                      className="h-4 w-4 accent-[#2a2927]"
+                    />
+                    <label
+                      htmlFor="saveAddressToProfile"
+                      className="text-sm text-[#2a2927]"
+                    >
+                      Save this address to my profile for future orders
+                    </label>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={handleUseNewAddress}
+                    className="w-full bg-[#2a2927] text-white py-2.5 rounded-full shadow-sm hover:bg-[#1f1d1a] transition"
+                  >
+                    Use this address
+                  </button>
+                </div>
+              )}
+
+              {selectedAddressId === "manual" && (
+                <p className="text-xs text-[#6a4b2a]">
+                  Using the address entered above for this order.
+                </p>
+              )}
+
+              {errors.deliveryAddress && (
+                <p className="text-xs text-red-600">
+                  Please select or add a delivery address
+                </p>
+              )}
+            </div>
+          )}
+
           {/* Payment Method */}
-          <div className="bg-white p-6 rounded-2xl border border-[#2a2927] shadow-sm space-y-4">
-            <h2 className="text-xl font-bold text-[#2a2927]">
+          <div className="bg-white p-6 rounded-3xl border border-black/5 shadow-[0_10px_28px_rgba(20,15,10,0.06)] space-y-4">
+            <h2 className="text-xl font-semibold text-[#1f1d1a]">
               Payment Information
             </h2>
-            <div className="flex gap-6">
-              <label className="flex items-center gap-2 text-[#2a2927]">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <label className="flex items-center gap-3 text-[#2a2927] border border-black/10 rounded-2xl p-3 hover:border-[#2a2927]/40 transition">
                 <input
                   type="radio"
                   name="paymentMethod"
                   value="card"
                   checked={paymentMethod === "card"}
                   onChange={(e) => setPaymentMethod(e.target.value)}
+                  className="accent-[#2a2927]"
                 />
                 Credit / Debit Card
               </label>
-              <label className="flex items-center gap-2 text-[#2a2927]">
+              <label className="flex items-center gap-3 text-[#2a2927] border border-black/10 rounded-2xl p-3 hover:border-[#2a2927]/40 transition">
                 <input
                   type="radio"
                   name="paymentMethod"
                   value="cod"
                   checked={paymentMethod === "cod"}
                   onChange={(e) => setPaymentMethod(e.target.value)}
+                  className="accent-[#2a2927]"
                 />
                 Cash on Delivery
               </label>
@@ -353,8 +833,8 @@ export default function PaymentPage() {
                     value={form.cardNumber}
                     onChange={handleInputChange}
                     className={`w-full border ${
-                      errors.cardNumber ? "border-red-500" : "border-[#2a2927]"
-                    } p-3 rounded-md bg-transparent text-[#2a2927]`}
+                      errors.cardNumber ? "border-red-500" : "border-black/10"
+                    } p-3 rounded-xl bg-[#f8f7f4] text-[#2a2927] focus:outline-none focus:ring-2 focus:ring-[#2a2927]/15`}
                   />
                   {errors.cardNumber && (
                     <p className="text-xs text-red-600 mt-1">
@@ -371,8 +851,8 @@ export default function PaymentPage() {
                       value={form.expiry}
                       onChange={handleInputChange}
                       className={`w-full border ${
-                        errors.expiry ? "border-red-500" : "border-[#2a2927]"
-                      } p-3 rounded-md bg-transparent text-[#2a2927]`}
+                        errors.expiry ? "border-red-500" : "border-black/10"
+                      } p-3 rounded-xl bg-[#f8f7f4] text-[#2a2927] focus:outline-none focus:ring-2 focus:ring-[#2a2927]/15`}
                     />
                     {errors.expiry && (
                       <p className="text-xs text-red-600 mt-1">
@@ -388,8 +868,8 @@ export default function PaymentPage() {
                       value={form.cvv}
                       onChange={handleInputChange}
                       className={`w-full border ${
-                        errors.cvv ? "border-red-500" : "border-[#2a2927]"
-                      } p-3 rounded-md bg-transparent text-[#2a2927]`}
+                        errors.cvv ? "border-red-500" : "border-black/10"
+                      } p-3 rounded-xl bg-[#f8f7f4] text-[#2a2927] focus:outline-none focus:ring-2 focus:ring-[#2a2927]/15`}
                     />
                     {errors.cvv && (
                       <p className="text-xs text-red-600 mt-1">
@@ -406,8 +886,8 @@ export default function PaymentPage() {
                     value={form.cardName}
                     onChange={handleInputChange}
                     className={`w-full border ${
-                      errors.cardName ? "border-red-500" : "border-[#2a2927]"
-                    } p-3 rounded-md bg-transparent text-[#2a2927]`}
+                      errors.cardName ? "border-red-500" : "border-black/10"
+                    } p-3 rounded-xl bg-[#f8f7f4] text-[#2a2927] focus:outline-none focus:ring-2 focus:ring-[#2a2927]/15`}
                   />
                   {errors.cardName && (
                     <p className="text-xs text-red-600 mt-1">
@@ -420,8 +900,8 @@ export default function PaymentPage() {
           </div>
 
           {/* Special Instructions */}
-          <div className="bg-white p-6 rounded-2xl border border-[#2a2927] shadow-sm">
-            <h2 className="text-xl font-bold text-[#2a2927] mb-2">
+          <div className="bg-white p-6 rounded-3xl border border-black/5 shadow-[0_10px_28px_rgba(20,15,10,0.06)]">
+            <h2 className="text-xl font-semibold text-[#1f1d1a] mb-2">
               Special Instructions
             </h2>
             <textarea
@@ -429,14 +909,14 @@ export default function PaymentPage() {
               placeholder="Any special requests or delivery instructions..."
               value={specialInstructions}
               onChange={(e) => setSpecialInstructions(e.target.value)}
-              className="w-full border border-[#2a2927] p-3 rounded-md bg-transparent text-[#2a2927]"
+              className="w-full border border-black/10 p-3 rounded-xl bg-[#f8f7f4] text-[#2a2927] focus:outline-none focus:ring-2 focus:ring-[#2a2927]/15"
             />
           </div>
         </div>
 
         {/* Right Order Summary */}
-        <div className="bg-white p-6 rounded-2xl border border-[#2a2927] shadow-sm h-fit">
-          <h2 className="text-xl font-bold text-[#2a2927] mb-4">
+        <div className="bg-white p-6 rounded-3xl border border-black/5 shadow-[0_10px_28px_rgba(20,15,10,0.06)] h-fit md:sticky md:top-28">
+          <h2 className="text-xl font-semibold text-[#1f1d1a] mb-4">
             Order Summary
           </h2>
           <div className="space-y-2 text-[#2a2927] text-sm">
@@ -449,28 +929,28 @@ export default function PaymentPage() {
               <span>₹{tax.toFixed(2)}</span>
             </div>
             {discount > 0 && (
-              <div className="flex justify-between text-green-600">
+              <div className="flex justify-between text-green-700">
                 <span>Discount (10%):</span>
                 <span>-₹{discount.toFixed(2)}</span>
               </div>
             )}
             {orderType === "delivery" && (
-              <div className="flex justify-between text-[#7f6df2]">
+              <div className="flex justify-between text-[#6a4b2a]">
                 <span>Delivery Charge:</span>
                 <span>₹{deliveryCharge.toFixed(2)}</span>
               </div>
             )}
-            <div className="flex justify-between font-bold text-lg pt-2 border-t mt-3">
+            <div className="flex justify-between font-semibold text-lg pt-2 border-t border-black/10 mt-3">
               <span>Total:</span>
               <span>₹{total.toFixed(2)}</span>
             </div>
-            <div className="bg-[#fdf7d8] text-[#6d5c00] text-xs p-3 rounded-md mt-3">
+            <div className="bg-[#f6f1e8] text-[#6a4b2a] text-xs p-3 rounded-xl mt-3">
               ⏱️ Ready in 15–30 minutes
             </div>
           </div>
           <button
             onClick={handleOrder}
-            className="w-full mt-6 bg-[#2a2927] text-white py-3 rounded-full hover:bg-white hover:text-[#2a2927] hover:border hover:border-[#2a2927] transition-all"
+            className="w-full mt-6 bg-[#2a2927] text-white py-3 rounded-full shadow-sm hover:bg-[#1f1d1a] transition"
           >
             Place Order – ₹{total.toFixed(2)}
           </button>

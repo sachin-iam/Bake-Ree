@@ -10,7 +10,7 @@ export default function ContactForm() {
   const [showDropdown, setShowDropdown] = useState(false);
 
   return (
-    <div className="relative w-full min-h-screen">
+    <div className="relative w-full">
       {/* Layered BG (top half light, bottom half dark) */}
       <div className="absolute inset-0 z-0">
         <div className="h-[25%] bg-[#f3f2ec]" />
@@ -18,7 +18,7 @@ export default function ContactForm() {
       </div>
 
       {/* Centered Contact Form */}
-      <section className="relative z-10 max-w-7xl mx-auto px-6 py-20">
+      <section className="relative z-10 max-w-7xl mx-auto px-6 pt-20 pb-15">
         <div className="bg-[#afa5f7] rounded-[3rem] px-8 md:px-14 py-16">
           <div className="grid md:grid-cols-2 gap-12">
             {/* Left Heading */}

@@ -3,7 +3,7 @@ import Image from "next/image";
 
 export default function Footer() {
   return (
-    <footer className="bg-[#172b27] text-[#d4f3f0] px-6 pt-40 pb-10">
+    <footer className="bg-[#172b27] text-[#d4f3f0] px-6 pt-8 pb-10">
       <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-5 gap-10 text-sm">
         {/* Logo & Brand */}
         <div className="flex flex-col gap-4">
@@ -24,8 +24,13 @@ export default function Footer() {
 
         {/* Menu */}
         <div>
-          <h4 className="font-bold mb-2">MENU</h4>
+          <h4 className="font-bold mb-2">QUICK LINKS</h4>
           <ul className="space-y-1">
+            <li>
+              <Link href="/#home" className="hover:underline">
+                Home
+              </Link>
+            </li>
             <li>
               <Link href="/#products" className="hover:underline">
                 Products
@@ -41,12 +46,6 @@ export default function Footer() {
                 Contact
               </Link>
             </li>
-            <li>
-              <Link href="/#faq" className="hover:underline">
-                FAQ
-              </Link>
-            </li>{" "}
-            {/* ← fixed */}
           </ul>
         </div>
 

@@ -1,5 +1,6 @@
 // client/src/services/http.ts
 import axios, { type InternalAxiosRequestConfig } from "axios";
+import { clearStoredToken, setSessionExpiredFlag } from "@/utils/jwt";
 
 export const BASE_URL =
   process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
@@ -23,6 +24,23 @@ http.interceptors.request.use(
     return config;
   },
   (error) => Promise.reject(error)
+);
+
+http.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (typeof window !== "undefined") {
+      const status = error?.response?.status;
+      if (status === 401 || status === 403) {
+        setSessionExpiredFlag();
+        clearStoredToken();
+        if (!window.location.pathname.startsWith("/login")) {
+          window.location.href = "/login";
+        }
+      }
+    }
+    return Promise.reject(error);
+  }
 );
 
 export default http;

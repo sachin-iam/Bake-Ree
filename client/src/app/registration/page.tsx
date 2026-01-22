@@ -3,9 +3,12 @@
 import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 import { FcGoogle } from "react-icons/fc";
 import { FaApple } from "react-icons/fa";
 import { HiEye, HiEyeOff } from "react-icons/hi";
+import { registerUser } from "@/services/authService";
+import toast from "react-hot-toast";
 
 export default function RegistrationPage() {
   const [form, setForm] = useState({
@@ -18,20 +21,49 @@ export default function RegistrationPage() {
 
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
+  const [loading, setLoading] = useState(false);
+
+  const router = useRouter();
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
     if (form.password !== form.confirmPassword) {
-      alert("Passwords do not match");
+      toast.error("Passwords do not match");
       return;
     }
 
-    console.log("Registering:", form);
-    // TODO: Send to backend
+    if (form.password.length < 6) {
+      toast.error("Password must be at least 6 characters long");
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      await registerUser(
+        form.firstName,
+        form.lastName,
+        form.email,
+        form.password
+      );
+
+      // ✅ Redirect after successful registration
+      toast.success("Account created successfully");
+      router.push("/dashboard");
+    } catch (error: any) {
+      toast.error(
+        error.response?.data?.error ||
+          "Registration failed. Please try again."
+      );
+      console.error("Registration error:", error);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -132,9 +164,10 @@ export default function RegistrationPage() {
 
           <button
             type="submit"
-            className="w-full bg-[#2a2927] text-white py-2.5 rounded-full hover:bg-white hover:text-[#2a2927] hover:border hover:border-[#2a2927] transition-all"
+            className="w-full bg-[#2a2927] text-white py-2.5 rounded-full hover:bg-white hover:text-[#2a2927] hover:border hover:border-[#2a2927] transition-all disabled:opacity-50"
+            disabled={loading}
           >
-            Register
+            {loading ? "Registering..." : "Register"}
           </button>
         </form>
 

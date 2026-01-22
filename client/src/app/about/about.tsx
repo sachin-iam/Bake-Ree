@@ -13,7 +13,7 @@ export default function About() {
       if (!section) return;
 
       const rect = section.getBoundingClientRect();
-      const threshold = window.innerHeight * 0.6;
+      const threshold = window.innerHeight * 0.9;
       const scrolledInto = rect.top < threshold;
       setIsVisible(scrolledInto);
     };
@@ -25,26 +25,26 @@ export default function About() {
   return (
     <section
       ref={containerRef}
-      className="bg-[#1a2d25] text-[#f3f2ec] w-full flex md:flex-row relative min-h-[300vh]"
+      className="bg-[#1a2d25] text-[#f3f2ec] w-full flex md:flex-row relative min-h-[300vh] border-t-6 border-[#f3f2ec]"
     >
       {/* Left column - sticky heading */}
       <div className="md:w-1/3 sticky top-20 h-fit p-10 md:p-20 z-10 self-start">
         <span className="inline-block bg-[#f3f2ec] text-[#1a2d25] text-xs tracking-widest font-semibold px-4 py-2 rounded-br-xl mb-6">
           ABOUT
         </span>
-        <h2 className="text-5xl font-light leading-tight">
+        <h2 className="headline-serif text-5xl font-light leading-tight">
           All about
           <br />
-          Bake Ree
+          <span className="brush-underline">Bake Ree</span>
         </h2>
       </div>
 
       {/* Middle column - now scrolls full height */}
-      <div className="md:w-1/3 flex flex-col pt-90 justify-center sticky top-[40vh] z-10 self-start px-6 py-20 h-fit gap-12">
+      <div className="md:w-1/3 flex flex-col z-10 self-start px-6 pb-20 pt-[90vh] min-h-[130vh] gap-12">
         <motion.div
-          initial={{ opacity: 0, y: 80 }}
-          animate={isVisible ? { opacity: 1, y: 0 } : {}}
-          transition={{ duration: 1, delay: 0.1, ease: "easeOut" }}
+          initial={{ y: 120 }}
+          animate={isVisible ? { y: 0 } : {}}
+          transition={{ duration: 0.45, ease: "easeOut" }}
           className="flex flex-col gap-10"
         >
           <p>

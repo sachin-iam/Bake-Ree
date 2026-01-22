@@ -37,6 +37,7 @@
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+  --font-display: var(--font-display);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -49,9 +50,48 @@
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-sans), Arial, Helvetica, sans-serif;
 }
 
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: var(--font-display), var(--font-sans), serif;
+}
+
+.headline-serif {
+  font-family: var(--font-display), var(--font-sans), serif;
+  letter-spacing: 0.01em;
+}
+
+.brush-underline {
+  position: relative;
+  display: inline-block;
+  padding-bottom: 0.08em;
+}
+
+.brush-underline::after {
+  content: "";
+  position: absolute;
+  left: -0.06em;
+  right: -0.06em;
+  bottom: 0.02em;
+  height: 0.22em;
+  background-color: currentColor;
+  opacity: 0.2;
+  transform: rotate(-1.2deg);
+  pointer-events: none;
+  z-index: -1;
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 260 40'%3E%3Cpath d='M5 28 Q60 6 120 18 T255 26' stroke='black' stroke-width='14' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  -webkit-mask-repeat: no-repeat;
+  -webkit-mask-size: 100% 100%;
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 260 40'%3E%3Cpath d='M5 28 Q60 6 120 18 T255 26' stroke='black' stroke-width='14' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  mask-repeat: no-repeat;
+  mask-size: 100% 100%;
+}
 /* -------------------- */
 /* Phone Input Styling (react-phone-input-2) */
 /* -------------------- */
@@ -229,14 +269,47 @@ html {
     overflow: visible !important;
   }
 
-  @page {
-    size: A4;
-    margin: 1in;
-  }
+@page {
+  size: A4;
+  margin: 1in;
+}
 
-  html, body {
-    margin: 0 !important;
-    padding: 0 !important;
-    -webkit-print-color-adjust: exact !important;
-  }
+html, body {
+  margin: 0 !important;
+  padding: 0 !important;
+  -webkit-print-color-adjust: exact !important;
+}
+}
+
+/* -------------------- */
+/* Toast Notifications  */
+/* -------------------- */
+.app-toast {
+  border-radius: 9999px !important;
+  padding: 5px 11px !important;
+  border: 1px solid #fca5a5 !important;
+  background: #ffffff !important;
+  color: #b91c1c !important;
+  box-shadow: 0 6px 14px rgba(185, 28, 28, 0.12);
+  font-weight: 600;
+  font-size: 0.765rem;
+  min-width: 0;
+  max-width: 90vw;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.app-toast-success {
+  border-color: #86efac !important;
+  background: #ffffff !important;
+  color: #166534 !important;
+  box-shadow: 0 6px 14px rgba(22, 101, 52, 0.12);
+}
+
+.app-toast-error {
+  border-color: #fca5a5 !important;
+  background: #ffffff !important;
+  color: #b91c1c !important;
+  box-shadow: 0 6px 14px rgba(185, 28, 28, 0.12);
 }

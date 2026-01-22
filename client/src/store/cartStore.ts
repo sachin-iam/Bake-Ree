@@ -79,7 +79,19 @@ export const useCartStore = create<CartStore>()(
         }),
 
       inc: (id) => get().updateQuantity(id, 1),
-      dec: (id) => get().updateQuantity(id, -1),
+      dec: (id) =>
+        set((state) => {
+          const item = state.cart.find((it) => it.id === id);
+          if (!item) return state;
+          if (item.quantity <= 1) {
+            return { cart: state.cart.filter((it) => it.id !== id) };
+          }
+          return {
+            cart: state.cart.map((it) =>
+              it.id === id ? { ...it, quantity: it.quantity - 1 } : it
+            ),
+          };
+        }),
 
       getQty: (id) => get().cart.find((it) => it.id === id)?.quantity || 0,
       totalItems: () => get().cart.reduce((acc, it) => acc + it.quantity, 0),

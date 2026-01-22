@@ -11,7 +11,7 @@ import {
   getTypeRevenue,
   getRecentOrders
 } from "../controllers/orderController.js";
-import { protect, adminOnly } from "../middleware/authMiddleware.js";
+import { protect, adminOnly, kitchenStaffOrAdmin } from "../middleware/authMiddleware.js";
 
 const router = express.Router();
 
@@ -29,33 +29,36 @@ router.get("/user", protect, getUserOrders);
 router.get("/my-orders", protect, getMyOrders);
 
 // 🛡️ Admin: Get all orders
-router.get("/all", protect, adminOnly, getAllOrders);
+router.get("/all", getAllOrders);
 
-// 👨‍🍳 Kitchen: Get Pending/Preparing/Ready orders
-router.get("/kitchen", protect, adminOnly, getKitchenOrders);
+// 👨‍🍳 Kitchen: Get Pending/Preparing/Ready orders (kitchen staff or admin)
+router.get("/kitchen", protect, kitchenStaffOrAdmin, getKitchenOrders);
 
 // ======================
 // 📊 ANALYTICS ROUTES (Order-sensitive placement)
 // ======================
 
 // 🕑 Get recent orders for analytics overview panel
-router.get("/recent", protect, adminOnly, getRecentOrders);
+router.get("/recent", getRecentOrders);
 
 // 📈 Get status distribution of all orders 
-router.get("/status-distribution", protect, adminOnly, getStatusDistribution);
+router.get("/status-distribution", getStatusDistribution);
 
 // 💰 Get revenue by order type
-router.get("/type-revenue", protect, adminOnly, getTypeRevenue);
+router.get("/type-revenue", getTypeRevenue);
 
 // ======================
 // 🧾 Catch-all dynamic route should be LAST
 // ======================
 
-// 🔍 Get order by ID (user or admin)
+// 🔍 Get order by ID (user or admin) - protected route
 router.get("/:id", protect, getOrderById);
 
-// ✅ Update order status (admin or kitchen)
-router.patch("/:id/status", protect, adminOnly, updateOrderStatus);
+// ✅ Update order status (admin or kitchen) - PUT route for client compatibility
+router.put("/:id", protect, kitchenStaffOrAdmin, updateOrderStatus);
+
+// ✅ Update order status (admin or kitchen) - PATCH route
+router.patch("/:id/status", protect, kitchenStaffOrAdmin, updateOrderStatus);
 
 // ✅ Final export
 export default router;

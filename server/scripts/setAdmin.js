@@ -7,7 +7,7 @@ const MONGO_URI = process.env.MONGO_URI;
 
 mongoose.connect(MONGO_URI).then(async () => {
   const res = await User.findOneAndUpdate(
-    { email: 'baby@example.com' },
+    { email: 'whoaaravguptaiam@gmail.com' },
     { isAdmin: true },
     { new: true }
   );

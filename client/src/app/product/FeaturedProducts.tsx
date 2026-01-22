@@ -7,6 +7,7 @@ import type { Product } from "@/types";
 import { cn } from "@/utils/cn";
 import { useCartStore } from "@/store/cartStore";
 import { hashIdToNumber } from "@/utils/hashId";
+import toast from "react-hot-toast";
 
 export default function FeaturedProducts() {
   const [items, setItems] = React.useState<Product[]>([]);
@@ -28,17 +29,17 @@ export default function FeaturedProducts() {
     return () => clearInterval(t);
   }, [items.length]);
 
-  if (!items.length) return null;
-
   const p = items[idx];
-  const pid = React.useMemo(() => hashIdToNumber(p._id), [p._id]);
+  const pid = p ? hashIdToNumber(p._id) : 0;
 
   const qty = useCartStore((s) => s.getQty(pid));
   const addToCart = useCartStore((s) => s.addToCart);
   const inc = useCartStore((s) => s.inc);
   const dec = useCartStore((s) => s.dec);
 
-  const onAdd = () =>
+  if (!p) return null;
+
+  const onAdd = () => {
     addToCart({
       id: pid,
       name: p.name,
@@ -46,6 +47,8 @@ export default function FeaturedProducts() {
       price: p.price,
       quantity: 1,
     });
+    toast.success("Added to cart");
+  };
 
   return (
     <section className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-14">

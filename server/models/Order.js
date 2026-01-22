@@ -40,6 +40,35 @@ const orderSchema = new mongoose.Schema(
     },
     deliveryCharge: { type: Number, default: 0 },
     specialInstructions: { type: String },
+    // Delivery address fields
+    deliveryAddress: {
+      street: { type: String },
+      city: { type: String },
+      state: { type: String },
+      zipCode: { type: String },
+      country: { type: String, default: "India" },
+      landmark: { type: String },
+      coordinates: {
+        lat: { type: Number },
+        lng: { type: Number },
+      },
+      recipientName: { type: String },
+      phone: { type: String },
+    },
+    deliveryAddressId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "DeliveryAddress",
+      default: null,
+    },
+    estimatedDeliveryTime: {
+      type: Date,
+      default: null,
+    },
+    assignedKitchenStaff: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      default: null,
+    },
   },
   { timestamps: true }
 );
