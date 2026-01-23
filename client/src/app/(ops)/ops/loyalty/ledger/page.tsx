@@ -1,7 +1,5 @@
-import OpsPageContent from "@/components/ops/OpsPageContent";
+import { redirect } from "next/navigation";
 
 export default function Page() {
-  return (
-    <OpsPageContent showTable />
-  );
+  redirect("/ops/crm/loyalty/points-ledger");
 }

@@ -5,7 +5,6 @@ import {
   ClipboardList,
   CreditCard,
   Factory,
-  Gift,
   Home,
   LineChart,
   Settings,
@@ -21,7 +20,6 @@ export type ModuleId =
   | "logistics"
   | "finance"
   | "crm"
-  | "loyalty"
   | "hr"
   | "analytics"
   | "settings"
@@ -102,13 +100,6 @@ export const TOP_NAV: OpsTopNavItem[] = [
     href: "/ops/crm",
     icon: Users,
     description: "Customer 360 views, lifecycle insights, and engagement workflows.",
-  },
-  {
-    key: "loyalty",
-    label: "Loyalty & Rewards",
-    href: "/ops/loyalty",
-    icon: Gift,
-    description: "Reward rules, redemptions, and membership tier governance.",
   },
   {
     key: "finance",
@@ -924,41 +915,6 @@ export const SUB_NAV_BY_MODULE: Record<ModuleId, OpsSubNavModule> = {
             description: "Accept/reject signals for training.",
           },
         ],
-      },
-    ],
-  },
-  loyalty: {
-    title: "Loyalty",
-    items: [
-      {
-        label: "Loyalty Dashboard",
-        href: "/ops/loyalty",
-        description: "Program health, point liability, and activity.",
-      },
-      {
-        label: "Points Ledger",
-        href: "/ops/loyalty/ledger",
-        description: "Points transactions and adjustments ledger.",
-      },
-      {
-        label: "Rules Engine",
-        href: "/ops/loyalty/rules",
-        description: "Reward earning and redemption rule configuration.",
-      },
-      {
-        label: "Points Expiry",
-        href: "/ops/loyalty/expiry",
-        description: "Point expiry schedules and notifications.",
-      },
-      {
-        label: "Redemptions",
-        href: "/ops/loyalty/redemptions",
-        description: "Redemption approvals and liability tracking.",
-      },
-      {
-        label: "Membership Tiers",
-        href: "/ops/loyalty/tiers",
-        description: "Tier benefits, thresholds, and migrations.",
       },
     ],
   },

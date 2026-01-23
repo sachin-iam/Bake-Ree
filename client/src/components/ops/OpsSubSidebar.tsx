@@ -34,7 +34,7 @@ export const getActiveModuleId = (pathname: string): ModuleId | null => {
   if (pathname.startsWith("/ops/logistics")) return "logistics";
   if (pathname.startsWith("/ops/finance")) return "finance";
   if (pathname.startsWith("/ops/crm")) return "crm";
-  if (pathname.startsWith("/ops/loyalty")) return "loyalty";
+  if (pathname.startsWith("/ops/loyalty")) return "crm";
   if (pathname.startsWith("/ops/analytics")) return "analytics";
   if (pathname.startsWith("/ops/settings")) return "settings";
   return null;
